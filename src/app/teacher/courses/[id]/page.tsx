@@ -164,11 +164,14 @@ function extractYouTubeID(url: string): string | null {
                 <div>
                   <h2 className="text-lg font-bold mb-2">الفيديو التعريفي</h2>
                   <div className="aspect-video bg-black rounded-lg">
-                    <video 
-                      src={course.intro_video_url} 
-                      controls 
-                      className="w-full h-full rounded-lg"
-                    />
+                   <iframe
+                                  className="w-full h-full"
+                                  src={`https://www.youtube.com/embed/${extractYouTubeID(course.intro_video_url)}`}
+                                  title="YouTube video"
+                                  frameBorder="0"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                ></iframe>
                   </div>
                 </div>
               )}
@@ -248,72 +251,68 @@ function extractYouTubeID(url: string): string | null {
           </div>
         </div>
 
-        <div className="bg-gray-700 p-6 rounded-2xl mt-6">
-          <h2 className="text-2xl font-bold mb-6">محتويات الكورس</h2>
-          <div className="space-y-6">
-            {course.details.map((detail, index) => (
-              <div key={detail.id} className="flex justify-between items-center p-4 bg-gray-600 rounded-xl">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center ml-3 mr-4">
-                    {index + 1}
-                  </div>
-                  <div>
-                    <div className="font-medium">{detail.title}</div>
-                    <div className="text-sm text-gray-400 flex items-center gap-4">
-                      {detail.content_type === 'video' ? (
-                        <>
-                          {course.intro_video_url && (
-                            <div>
-                              <h2 className="text-lg font-bold mb-2">الفيديو التعريفي</h2>
-                              <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                                <iframe
-                                  className="w-full h-full"
-                                  src={`https://www.youtube.com/embed/${extractYouTubeID(course.intro_video_url)}`}
-                                  title="YouTube video"
-                                  frameBorder="0"
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                  allowFullScreen
-                                ></iframe>
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <FiFileText className="ml-1" size={14} /> ملف
-                        </>
-                      )}
-                      {detail.description && <span className="mr-2">• {detail.description}</span>}
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  {detail.content_type === 'video' ? (
-                    <a 
-                      href={detail.content_link || '#'} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center"
-                    >
-                      <FiVideo className="ml-1" />
-                      مشاهدة
-                    </a>
-                  ) : (
-                    <a 
-                      href={detail.file_path || '#'} 
-                      download
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center"
-                    >
-                      <FiDownload className="ml-1" />
-                      تحميل
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
+ <div className="bg-gray-700 p-6 rounded-2xl mt-6">
+  <h2 className="text-2xl font-bold mb-6">محتويات الكورس</h2>
+  <div className="space-y-6">
+    {course.details.map((detail, index) => (
+      <div key={detail.id} className="p-4 bg-gray-600 rounded-xl space-y-4">
+        {/* عنوان و وصف المحتوى */}
+        <div className="flex items-center">
+          <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center ml-3 mr-4">
+            {index + 1}
+          </div>
+          <div>
+            <div className="font-medium">{detail.title}</div>
+            <div className="text-sm text-gray-400 flex items-center gap-4">
+              {detail.content_type === 'video' ? (
+                <>
+                  <FiVideo className="ml-1" size={14} />
+                  فيديو
+                </>
+              ) : (
+                <>
+                  <FiFileText className="ml-1" size={14} />
+                  ملف
+                </>
+              )}
+              {detail.description && <span className="mr-2">• {detail.description}</span>}
+            </div>
           </div>
         </div>
+
+        {/* ✅ عرض الفيديو كـ iframe */}
+        {detail.content_link && (
+          <div className="aspect-video bg-black rounded-lg overflow-hidden">
+            <iframe
+              className="w-full h-full"
+              src={`https://www.youtube.com/embed/${extractYouTubeID(detail.content_link)}`}
+              title="YouTube video"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+        )}
+
+        {/* ✅ زر التحميل لو الملف موجود */}
+        {detail.file_path && (
+          <div className="flex">
+            <a
+              href={detail.file_path}
+              download
+              className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center"
+            >
+              <FiDownload className="ml-1" />
+              تحميل الملف
+            </a>
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+</div>
+
+
       </div>
     </Layout>
   )

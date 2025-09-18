@@ -743,7 +743,6 @@ export default function CoursesPage() {
                     </td>
                     <td className="p-4">
                       <div className="flex items-center">
-                        <img src={course.teacher.image} alt={course.teacher.name} className="w-8 h-8 rounded-full ml-2" />
                         {course.teacher.name}
                       </div>
                     </td>

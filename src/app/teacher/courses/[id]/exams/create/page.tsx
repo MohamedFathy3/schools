@@ -48,10 +48,10 @@ export default function CreateExamPage({ params }: { params: { id: string } }) {
       })
 
       const data = await res.json()
+        toast.success('تم إنشاء الامتحان بنجاح')
+        router.push(`/teacher/courses/${params.id}/exams/`)
 
       if (data.message === 'Exam created successfully') {
-        toast.success('تم إنشاء الامتحان بنجاح')
-        router.push(`/teacher/courses/${params.id}/exams/${data.data.id}/questions`)
       } else {
         toast.error(data.message || 'فشل في إنشاء الامتحان')
       }
