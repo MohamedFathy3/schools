@@ -52,6 +52,7 @@ const teacherStats = {
   completedSessions: 156,
   earnings: 12500
 }
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
 
 export default function TeacherDetailPage() {
   const { id } = useParams()
@@ -64,7 +65,7 @@ export default function TeacherDetailPage() {
     
     const fetchTeacher = async () => {
       try {
-        const res = await fetch(`https://professionalacademyedu.com/api/teacher/${id}`)
+        const res = await fetch(`${API_URL}/teacher/${id}`)
         const data = await res.json()
         
         if (data.status === 200) {

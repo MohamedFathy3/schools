@@ -322,33 +322,22 @@ export default function CoursesPage() {
 
   const fetchCourses = async () => {
     try {
-      const token = Cookies.get('teacher_token')
-       const teacherId = Cookies.get('teacher_id') // أو أي طريقة للحصول عليه
-
-    if (!token || !teacherId) {
-      toast.error('يرجى تسجيل الدخول أولاً')
-      return
-    }
-      const res = await fetch(`${API_URL}/course-teacher/index`, {
+      const res = await fetch(`${API_URL}/course/index`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          filters: {teacher_id: parseInt(teacherId)},
+          filters: {},
           orderBy: "id",
           orderByDirection: "asc",
-          perPage: 50,
+          perPage: 100,
           paginate: true,
           delete: false
         })
+        
+        
       })
-      
-      if (!res.ok) {
-        throw new Error('فشل في تحميل الكورسات')
-      }
-      
       const data = await res.json()
       if (data.status === 200) {
         setCourses(data.data || [])
