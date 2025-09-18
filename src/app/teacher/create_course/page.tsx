@@ -162,9 +162,8 @@ export default function AddCoursePage() {
       })
 
       const data = await res.json()
-
-      if (data.success) {
         toast.success('تم إضافة الكورس بنجاح!')
+      if (data.success) {
         router.push('/teacher/courses')
       } else {
         toast.error(data.message || 'فشل في إضافة الكورس')

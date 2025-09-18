@@ -23,6 +23,13 @@ interface Course {
   title: string
 }
 
+function extractYouTubeID(url: string): string | null {
+  const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/
+  const match = url.match(regex)
+  return match ? match[1] : null
+}
+
+
 export default function CourseDetailsPage() {
   const params = useParams()
   const courseId = params.id as string
@@ -295,17 +302,19 @@ export default function CourseDetailsPage() {
                           {detail.content_type === 'online' ? 'أونلاين' : 'مسجل'}
                         </span>
                         
-                        {detail.content_link && (
-                          <a
-                            href={detail.content_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-400 hover:text-blue-300 flex items-center"
-                          >
-                            <FiEye className="ml-1" />
-                            عرض
-                          </a>
-                        )}
+                      {detail.content_link && (
+  <div className="mt-4 aspect-video bg-black rounded-lg overflow-hidden">
+    <iframe
+      className="w-full h-full"
+      src={`https://www.youtube.com/embed/${extractYouTubeID(detail.content_link)}`}
+      title="YouTube video"
+      frameBorder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowFullScreen
+    ></iframe>
+  </div>
+)}
+
                         
                         {detail.file_path && (
                           <a
@@ -326,111 +335,104 @@ export default function CourseDetailsPage() {
           )}
         </div>
 
-        {showAddForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">إضافة تفصيل جديد</h2>
-                <button onClick={() => setShowAddForm(false)} className="text-gray-400 hover:text-white">
-                  <FiX size={24} />
-                </button>
-              </div>
+ {showAddForm && (
+  <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="bg-gray-800 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-white">إضافة تفصيل جديد</h2>
+        <button onClick={() => setShowAddForm(false)} className="text-gray-400 hover:text-white transition">
+          <FiX size={24} />
+        </button>
+      </div>
 
-              <form onSubmit={handleAddDetail} className="space-y-4">
-                {/* <div>
-                  <label className="block text-sm font-medium mb-1">الكورس</label>
-                  <select
-                    value={newDetail.course_id}
-                    onChange={(e) => setNewDetail({...newDetail, course_id: e.target.value})}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
-                    required
-                  >
-                    <option value="">اختر الكورس</option>
-                    {courses.map(course => (
-                      <option key={course.id} value={course.id}>{course.title}</option>
-                    ))}
-                  </select>
-                </div> */}
+      {/* Form */}
+      <form onSubmit={handleAddDetail} className="space-y-5">
+        {/* العنوان */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1">العنوان</label>
+          <input
+            type="text"
+            value={newDetail.title}
+            onChange={(e) => setNewDetail({...newDetail, title: e.target.value})}
+            className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white placeholder-gray-400"
+            required
+            placeholder="عنوان التفصيل"
+          />
+        </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">العنوان</label>
-                  <input
-                    type="text"
-                    value={newDetail.title}
-                    onChange={(e) => setNewDetail({...newDetail, title: e.target.value})}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
-                    required
-                    placeholder="عنوان التفصيل"
-                  />
-                </div>
+        {/* الوصف */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1">الوصف</label>
+          <textarea
+            value={newDetail.description}
+            onChange={(e) => setNewDetail({...newDetail, description: e.target.value})}
+            rows={3}
+            className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white placeholder-gray-400"
+            required
+            placeholder="وصف التفصيل"
+          />
+        </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">الوصف</label>
-                  <textarea
-                    value={newDetail.description}
-                    onChange={(e) => setNewDetail({...newDetail, description: e.target.value})}
-                    rows={3}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
-                    required
-                    placeholder="وصف التفصيل"
-                  />
-                </div>
+        {/* نوع المحتوى */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1">نوع المحتوى</label>
+          <select
+            value={newDetail.content_type}
+            onChange={(e) => setNewDetail({...newDetail, content_type: e.target.value})}
+            className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white"
+            required
+          >
+            <option value="">اختر نوع المحتوى</option>
+            <option value="video">فيديو</option>
+            <option value="zoom">Zoom</option>
+          </select>
+        </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">نوع المحتوى</label>
-                  <select
-                    value={newDetail.content_type}
-                    onChange={(e) => setNewDetail({...newDetail, content_type: e.target.value})}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
-                    required
-                  >
-                    <option value="video">video</option>
-                    <option value="zoom">zoom</option>
-               
+        {/* رابط المحتوى */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1">رابط المحتوى</label>
+          <input
+            type="url"
+            value={newDetail.content_link}
+            onChange={(e) => setNewDetail({...newDetail, content_link: e.target.value})}
+            className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white placeholder-gray-400"
+            placeholder="https://example.com"
+          />
+        </div>
 
-                  </select>
-                </div>
+        {/* رفع ملف */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1">رفع ملف (اختياري)</label>
+          <input
+            type="file"
+            onChange={(e) => setNewDetail({...newDetail, file: e.target.files?.[0] || null})}
+            className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white"
+          />
+        </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">رابط المحتوى</label>
-                  <input
-                    type="url"
-                    value={newDetail.content_link}
-                    onChange={(e) => setNewDetail({...newDetail, content_link: e.target.value})}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
-                    placeholder="https://example.com"
-                  />
-                </div>
+        {/* الأزرار */}
+        <div className="flex gap-4 pt-4 justify-end">
+          <button
+            type="submit"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl flex items-center transition"
+          >
+            <FiPlus className="ml-2" />
+            إضافة التفصيل
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowAddForm(false)}
+            className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-xl transition"
+          >
+            إلغاء
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">رفع ملف (اختياري)</label>
-                  <input
-                    type="file"
-                    onChange={(e) => setNewDetail({...newDetail, file: e.target.files?.[0] || null})}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
-                  />
-                </div>
-
-                <div className="flex gap-4 pt-4">
-                  <button
-                    type="submit"
-                    className="bg-blue-600 text-white px-6 py-2 rounded-xl flex items-center"
-                  >
-                    <FiPlus className="ml-2" />
-                    إضافة التفصيل
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddForm(false)}
-                    className="bg-gray-600 text-white px-6 py-2 rounded-xl"
-                  >
-                    إلغاء
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     </Layout>
   )
