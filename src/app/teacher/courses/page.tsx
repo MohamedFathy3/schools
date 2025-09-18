@@ -474,6 +474,41 @@ export default function CoursesPage() {
     )
   }
 
+
+  const handleDeleteCourse = async (courseId: number) => {
+  if (!confirm('هل أنت متأكد من حذف هذا الكورس؟')) return
+
+  try {
+    const token = Cookies.get('teacher_token')
+    if (!token) {
+      toast.error('يرجى تسجيل الدخول أولاً')
+      return
+    }
+
+    const res = await fetch(`${API_URL}/course/delete`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+       Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        items: [courseId]
+      })
+    })
+
+    const data = await res.json()
+
+    if (res.ok && (data.status === 200 || data.message?.includes("success"))) {
+      toast.success('تم حذف الكورس بنجاح')
+      fetchCourses()
+    } else {
+      toast.error(data.message || 'فشل في حذف الكورس')
+    }
+  } catch (err) {
+    toast.error('حدث خطأ أثناء الحذف')
+  }
+}
+
   return (
     <Layout>
       <div className="p-6 bg-gray-800 min-h-screen">
@@ -778,7 +813,10 @@ export default function CoursesPage() {
                         >
                           <FiEdit />
                         </button>
-                        <button className="bg-red-600 text-white p-2 rounded-lg" title="حذف">
+                        <button 
+                          onClick={() => handleDeleteCourse(course.id)}
+
+                        className="bg-red-600 text-white p-2 rounded-lg" title="حذف">
                           <FiTrash2 />
                         </button>
                         <Link href={`/teacher/courses/${course.id}`}>

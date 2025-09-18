@@ -5,6 +5,7 @@ import { FiPlus, FiX, FiVideo, FiBook, FiDollarSign, FiPercent, FiLink, FiUpload
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import Cookies from 'js-cookie'
+
 import Layoutteacher from '@/components/Layoutteacher'
 
 interface Stage {
@@ -256,7 +257,7 @@ export default function AddCoursePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">الماده *</label>
+              <label className="block text-sm font-semibold mb-2">المرحلة *</label>
               <select
                 name="stage_id"
                 value={formData.stage_id}
@@ -264,7 +265,7 @@ export default function AddCoursePage() {
                 required
                 className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">اختر الماده</option>
+                <option value="">اختر المرحلة</option>
                 {stages.map(stage => (
                   <option key={stage.id} value={stage.id}>{stage.name}</option>
                 ))}
@@ -272,7 +273,7 @@ export default function AddCoursePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">المرحلة *</label>
+              <label className="block text-sm font-semibold mb-2">الماده *</label>
               <select
                 name="subject_id"
                 value={formData.subject_id}
@@ -280,7 +281,7 @@ export default function AddCoursePage() {
                 required
                 className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">اختر المرحلة</option>
+                <option value="">اختر الماده</option>
                 {subjects.map(subject => (
                   <option key={subject.id} value={subject.id}>{subject.name}</option>
                 ))}
