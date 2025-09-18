@@ -94,6 +94,8 @@ export default function CourseDetailsPage() {
   const handleSave = async (id: number) => {
     try {
       const payload = new FormData()
+      payload.append('course_id', courseId)
+
       Object.entries(editForm).forEach(([key, value]) => {
         if (value !== null && value !== undefined) {
           payload.append(key, value as string)
@@ -127,6 +129,7 @@ export default function CourseDetailsPage() {
     e.preventDefault()
     try {
       const payload = new FormData()
+
       Object.entries(newDetail).forEach(([key, value]) => {
         if (value !== null && value !== undefined) {
           if (key === 'file' && value instanceof File) {
