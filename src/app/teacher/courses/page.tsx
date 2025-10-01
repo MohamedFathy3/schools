@@ -4,10 +4,10 @@
 import React, { useState, useEffect } from 'react'
 import { FiEdit, FiTrash2, FiEye, FiPlus, FiSearch, FiVideo, FiFileText, FiDollarSign, FiUsers, FiBook, FiFilter, FiChevronDown, FiChevronUp, FiX } from 'react-icons/fi'
 import { ToastContainer, toast } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
 import Layout from '@/components/Layoutteacher'
 import Cookies from 'js-cookie'
 import Link from 'next/link'
+import {useTeacherAuth} from '@/contexts/teacherAuthContext'
 
 interface Course {
   id: number
@@ -302,6 +302,9 @@ export default function CoursesPage() {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [countries, setCountries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+
+
+const { user } = useTeacherAuth()
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table')
   const [searchTerm, setSearchTerm] = useState('')
   const [editingCourse, setEditingCourse] = useState<Course | null>(null)
@@ -318,7 +321,66 @@ export default function CoursesPage() {
     maxSubscribers: ''
   })
 
-  const API_URL = '/api'; // بدل ما تستخدم https://back.professionalacademyedu.com/api مباشرة
+  const API_URL = '/api'; 
+
+const fetchData = async (endpoint: string, body: any = {}) => {
+  try {
+    const res = await fetch(`${API_URL}/${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...body,
+        filters: {},
+        orderBy: "id",
+        orderByDirection: "asc",
+        perPage: 100,
+        paginate: true,
+        delete: false
+      }),
+    });
+
+    const data = await res.json();
+    if (data.status === 200) {
+      return data.data || [];
+    } else {
+      throw new Error(data.message || "فشل في جلب البيانات");
+    }
+  } catch (err) {
+    toast.error("حدث خطأ أثناء جلب البيانات");
+    return [];
+  }
+};
+
+
+const fetchAllData = async () => {
+  setLoading(true);
+  try {
+    const [stages, countries, subjects] = await Promise.all([
+      fetchData("stage/index"),
+      fetchData("country/index"),
+      fetchData("subject/index"),
+    ]);
+
+    return { stages, countries, subjects };
+  } catch (err) {
+    toast.error("تعذر تحميل البيانات");
+    return { stages: [], countries: [], subjects: [] };
+  } finally {
+    setLoading(false);
+  }
+};
+
+useEffect(() => {
+  const load = async () => {
+    const { stages, countries, subjects } = await fetchAllData();
+    setStages(stages);
+    setCountries(countries);
+    setSubjects(subjects);
+  };
+  load();
+}, []);
 
   const fetchCourses = async () => {
     try {
@@ -328,7 +390,7 @@ export default function CoursesPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          filters: { "teacher_id": Cookies.get('teacher_id') || '' },
+          filters: { "teacher_id": user.id},
           orderBy: "id",
           orderByDirection: "asc",
           perPage: 100,
@@ -403,26 +465,8 @@ export default function CoursesPage() {
   useEffect(() => {
     fetchCourses()
     
-    // Fetch stages, subjects, and countries
-    const fetchInitialData = async () => {
-      try {
-        const token = Cookies.get('teacher_token')
-        if (!token) return
-        
-        // You'll need to implement these API calls based on your backend
-        // const stagesRes = await fetch(`${API_URL}/stages`, { headers: { Authorization: `Bearer ${token}` } })
-        // const subjectsRes = await fetch(`${API_URL}/subjects`, { headers: { Authorization: `Bearer ${token}` } })
-        // const countriesRes = await fetch(`${API_URL}/countries`, { headers: { Authorization: `Bearer ${token}` } })
-        
-        // setStages(await stagesRes.json())
-        // setSubjects(await subjectsRes.json())
-        // setCountries(await countriesRes.json())
-      } catch (err) {
-        console.error('Error fetching initial data:', err)
-      }
-    }
     
-    fetchInitialData()
+   
   }, [])
 
   const filteredCourses = courses.filter(course => {

@@ -28,7 +28,7 @@ export default function Sidebar({
     { name: 'Course', icon: UserIcon, href: '/teacher/courses' },
     { name: 'Create Course', icon: UserIcon, href: '/teacher/create_course' },
     { name: 'Withdraw money', icon: FiArrowDownCircle, href: '/teacher/money' },
-  // { name: 'Chat', icon: MessageCircle, href: '/teacher/chat' },
+  { name: 'Chat', icon: MessageCircle, href: '/teacher/showchat' },
   ]
 
   return (

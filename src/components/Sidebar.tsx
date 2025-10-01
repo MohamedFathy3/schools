@@ -7,6 +7,7 @@ import {
   Database,
   ComputerIcon,
   User as UserIcon,
+  MessageCircle,
 } from 'lucide-react'
 import { useState } from 'react'
 import { FiArrowDownCircle } from 'react-icons/fi'
@@ -30,6 +31,7 @@ export default function Sidebar({
     { name: 'Subject', icon: ComputerIcon, href: '/dashboard/subject' },
     { name: 'Stages', icon: UserIcon, href: '/dashboard/Stages' },
     { name: 'Course', icon: UserIcon, href: '/dashboard/course' },
+    { name: 'chat', icon: MessageCircle, href: '/dashboard/sendchat' },
     { name: 'Withdraw money', icon: FiArrowDownCircle, href: '/dashboard/money' },
     
   
