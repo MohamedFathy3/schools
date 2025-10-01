@@ -4,10 +4,12 @@ import { useParams, useRouter } from 'next/navigation'
 import { 
   FiArrowLeft, FiMail, FiPhone, FiCreditCard, FiUser, 
   FiDollarSign, FiBook, FiAward, FiFlag, FiUsers, 
-  FiStar, FiCalendar, FiDollarSign as DollarIcon 
+  FiStar, FiCalendar 
 } from 'react-icons/fi'
 import Layout from '@/components/Layout'
-
+import Cookies from 'js-cookie'
+import { toast, ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 interface Teacher {
   id: number
   name: string
@@ -24,27 +26,13 @@ interface Teacher {
   branch_name: string
   wallets_name: string
   wallets_number: string
-  country: {
-    id: number
-    name: string
-    image: string
-    code: string
-  }
-  stage: {
-    id: number
-    name: string
-    postion: number
-    image: string
-  }
-  subject: {
-    id: number
-    name: string
-    postion: number
-    image: string
-  }
+  commission?: string
+  country: { id: number; name: string; image: string; code: string }
+  stage: { id: number; name: string; postion: number; image: string }
+  subject: { id: number; name: string; postion: number; image: string }
 }
 
-// إحصائيات وهمية للمعلم (يمكن استبدالها ببيانات من API)
+// إحصائيات وهمية (يمكن تعويضها من API لو تحب)
 const teacherStats = {
   totalStudents: 245,
   totalCourses: 12,
@@ -52,26 +40,30 @@ const teacherStats = {
   completedSessions: 156,
   earnings: 12500
 }
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
+
+const API_URL = '/api'
 
 export default function TeacherDetailPage() {
   const { id } = useParams()
   const router = useRouter()
   const [teacher, setTeacher] = useState<Teacher | null>(null)
   const [loading, setLoading] = useState(true)
+  const [commission, setCommission] = useState<number>(0)
 
   useEffect(() => {
     if (!id) return
-    
     const fetchTeacher = async () => {
       try {
         const res = await fetch(`${API_URL}/teacher/${id}`)
         const data = await res.json()
-        
         if (data.status === 200) {
           setTeacher(data.data)
-        } else {
-          console.error('Failed to fetch teacher:', data.message)
+          // تحويل العمولة من '5.00%' إلى رقم
+
+          const comm = parseFloat(data.data.commission?.replace('%','')) || 0
+toast.success('تم التحديث بنجاح')
+
+          setCommission(comm)
         }
       } catch (err) {
         console.error('Error fetching teacher:', err)
@@ -79,28 +71,38 @@ export default function TeacherDetailPage() {
         setLoading(false)
       }
     }
-
     fetchTeacher()
   }, [id])
 
+  const handleUpdateCommission = async () => {
+    if (!teacher) return
+    try {
+      const token = Cookies.get('admin_token') || ''
+      const res = await fetch(`${API_URL}/teachers/${teacher.id}/commission`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ commission }),
+      })
+      const data = await res.json()
+      if (data.result === 'Success') {
+        toast.success('تم تحديث العمولة بنجاح')
+        setTeacher({ ...teacher, commission: `${commission.toFixed(2)}%` })
+      } else {
+        toast.error(data.message || 'فشل في تحديث العمولة')
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error('حدث خطأ أثناء التحديث')
+    }
+  }
+
   if (loading) {
     return (
-      <div className="relative min-h-screen bg-gray-900">
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gray-900 opacity-70 backdrop-blur-sm"></div>
-
-        {/* Top loading bar */}
-        <div className="absolute top-0 left-0 h-1 w-full bg-blue-900 overflow-hidden">
-          <div
-            className="h-1 bg-blue-500 animate-loading-bar"
-            style={{ width: '50%' }}
-          />
-        </div>
-
-        {/* Center Spinner Placeholder */}
-        <div className="relative flex items-center justify-center min-h-screen">
-          {/* ممكن تحط spinner هنا */}
-        </div>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white">جارِ التحميل...</div>
       </div>
     )
   }
@@ -123,94 +125,126 @@ export default function TeacherDetailPage() {
 
   return (
     <Layout>
+      <ToastContainer 
+  position="top-right"
+  autoClose={3000}
+  hideProgressBar={false}
+  newestOnTop={false}
+  closeOnClick
+  rtl={false}
+  pauseOnFocusLoss
+  draggable
+  pauseOnHover
+  theme="dark"
+/>
+
       <div className="min-h-screen bg-gray-900 text-gray-100">
         {/* Header */}
         <div className="bg-gradient-to-r from-gray-800 to-gray-900 border-b border-gray-700">
-          <div className="container mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => router.back()}
-                className="flex items-center text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                <FiArrowLeft className="ml-2" />
-                العودة للقائمة
-              </button>
-              <h1 className="text-2xl font-bold">تفاصيل المعلم</h1>
-            </div>
+          <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              <FiArrowLeft className="ml-2" />
+              العودة للقائمة
+            </button>
+            <h1 className="text-2xl font-bold">تفاصيل المعلم</h1>
           </div>
         </div>
 
         <div className="container mx-auto px-6 py-8">
+          {/* تعديل العمولة أعلى الإحصائيات */}
+          <div className="bg-gray-800 rounded-2xl p-6 mb-8 border border-gray-700 shadow-lg flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <FiDollarSign className="text-yellow-400 text-2xl" />
+              <div>
+                <p className="text-gray-400">نسبة العمولة الحالية</p>
+                <div className="flex items-center space-x-2 mt-1">
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={commission}
+                    onChange={e => setCommission(Number(e.target.value))}
+                    className="w-20 p-2 rounded-lg bg-gray-750 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  />
+                  <span className="text-gray-400">%</span>
+                  <button
+                    onClick={handleUpdateCommission}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition"
+                  >
+                    تحديث
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* إحصائيات */}
-         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-  {/* الطلاب */}
-  <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-lg transition">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-gray-400 text-xl">إجمالي الطلاب</p>
-        <p className="text-2xl font-bold text-white">{teacherStats.totalStudents}</p>
-      </div>
-      <div className="bg-blue-500/20 p-3 rounded-full">
-        <FiUsers className="text-blue-400 text-xl" />
-      </div>
-    </div>
-  </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-lg transition">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-xl">إجمالي الطلاب</p>
+                  <p className="text-2xl font-bold text-white">{teacherStats.totalStudents}</p>
+                </div>
+                <div className="bg-blue-500/20 p-3 rounded-full">
+                  <FiUsers className="text-blue-400 text-xl" />
+                </div>
+              </div>
+            </div>
 
-  {/* الكورسات */}
-  <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-lg transition">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-gray-400 text-xl">الكورسات</p>
-        <p className="text-2xl font-bold text-white">{teacherStats.totalCourses}</p>
-      </div>
-      <div className="bg-green-500/20 p-3 rounded-full">
-        <FiBook className="text-green-400 text-xl" />
-      </div>
-    </div>
-  </div>
+            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-lg transition">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-xl">الكورسات</p>
+                  <p className="text-2xl font-bold text-white">{teacherStats.totalCourses}</p>
+                </div>
+                <div className="bg-green-500/20 p-3 rounded-full">
+                  <FiBook className="text-green-400 text-xl" />
+                </div>
+              </div>
+            </div>
 
-  {/* التقييم */}
-  <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-lg transition">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-gray-400 text-xl">التقييم</p>
-        <p className="text-2xl font-bold text-white">{teacherStats.rating}/5</p>
-      </div>
-      <div className="bg-yellow-500/20 p-3 rounded-full">
-        <FiStar className="text-yellow-400 text-xl" />
-      </div>
-    </div>
-  </div>
+            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-lg transition">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-xl">التقييم</p>
+                  <p className="text-2xl font-bold text-white">{teacherStats.rating}/5</p>
+                </div>
+                <div className="bg-yellow-500/20 p-3 rounded-full">
+                  <FiStar className="text-yellow-400 text-xl" />
+                </div>
+              </div>
+            </div>
 
-  {/* الجلسات */}
-  <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-lg transition">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-gray-400 text-xl">الجلسات المكتملة</p>
-        <p className="text-2xl font-bold text-white">{teacherStats.completedSessions}</p>
-      </div>
-      <div className="bg-purple-500/20 p-3 rounded-full">
-        <FiCalendar className="text-purple-400 text-xl" />
-      </div>
-    </div>
-  </div>
+            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-lg transition">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-xl">الجلسات المكتملة</p>
+                  <p className="text-2xl font-bold text-white">{teacherStats.completedSessions}</p>
+                </div>
+                <div className="bg-purple-500/20 p-3 rounded-full">
+                  <FiCalendar className="text-purple-400 text-xl" />
+                </div>
+              </div>
+            </div>
 
-  {/* الأرباح */}
-  <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-lg transition">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-gray-400 text-xl">الأرباح</p>
-        <p className="text-2xl font-bold text-white">
-          {teacherStats.earnings.toLocaleString()} ج.م
-        </p>
-      </div>
-      <div className="bg-green-500/20 p-3 rounded-full">
-        <DollarIcon className="text-green-400 text-xl" />
-      </div>
-    </div>
-  </div>
-</div>
-
+            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-lg transition">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-xl">الأرباح</p>
+                  <p className="text-2xl font-bold text-white">
+                    {teacherStats.earnings.toLocaleString()} ج.م
+                  </p>
+                </div>
+                <div className="bg-green-500/20 p-3 rounded-full">
+                  <FiDollarSign className="text-green-400 text-xl" />
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* التفاصيل */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -274,7 +308,7 @@ export default function TeacherDetailPage() {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center p-3 bg-gray-750 rounded-lg">
                       <span className="text-gray-400">المرحلة:</span>
-                      <span className="text-white font-medium">{teacher.stage.name}</span>
+                      <span className="text-white font-medium">{teacher.stage?.name}</span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-gray-750 rounded-lg">
                       <span className="text-gray-400">المادة:</span>
@@ -340,18 +374,19 @@ export default function TeacherDetailPage() {
                   <div className="space-y-4">
                     <div>
                       <p className="text-sm text-gray-400 mb-2">صورة الشهادة</p>
-                      <a href={teacher.certificate_image} target="_blank" rel="noopener noreferrer" className="block">
-                        <img src={teacher.certificate_image} alt="شهادة" className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity" />
+                      <a href={teacher.certificate_image} target="_blank" rel="noopener noreferrer">
+                        <img src={teacher.certificate_image} alt="شهادة" className="w-full h-32 object-cover rounded-lg hover:opacity-80 transition-opacity" />
                       </a>
                     </div>
                     <div>
                       <p className="text-sm text-gray-400 mb-2">صورة الخبرة</p>
-                      <a href={teacher.experience_image} target="_blank" rel="noopener noreferrer" className="block">
-                        <img src={teacher.experience_image} alt="خبرة" className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity" />
+                      <a href={teacher.experience_image} target="_blank" rel="noopener noreferrer">
+                        <img src={teacher.experience_image} alt="خبرة" className="w-full h-32 object-cover rounded-lg hover:opacity-80 transition-opacity" />
                       </a>
                     </div>
                   </div>
                 </div>
+
               </div>
             </div>
           </div>

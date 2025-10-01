@@ -26,7 +26,7 @@ const ChatPage: React.FC<ChatProps> = ({ teacherId, adminId }) => {
   const [sending, setSending] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const API_URL = 'https://professionalacademyedu.com/api';
+  const API_URL = '/api'; // بدل ما تستخدم https://back.professionalacademyedu.com/api مباشرة
 
   const token = Cookies.get('teacher_token');
   const currentTeacherId = teacherId || parseInt(Cookies.get('teacher_id') || '0', 10);

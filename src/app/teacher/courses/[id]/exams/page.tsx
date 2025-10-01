@@ -22,7 +22,7 @@ interface Exam {
 export default function CourseExamsPage({ params }: { params: { id: string } }) {
   const [exams, setExams] = useState<Exam[]>([])
   const [loading, setLoading] = useState(true)
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
+  const API_URL = '/api'; // بدل ما تستخدم https://back.professionalacademyedu.com/api مباشرة
 
 const fetchExams = async (courseId: number) => {
   try {

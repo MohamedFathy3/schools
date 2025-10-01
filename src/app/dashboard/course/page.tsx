@@ -1,684 +1,541 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-
 'use client'
 import React, { useState, useEffect } from 'react'
-import { FiEdit, FiTrash2, FiEye, FiPlus, FiSearch, FiVideo, FiFileText, FiDollarSign, FiUsers, FiBook, FiFilter, FiChevronDown, FiChevronUp, FiX } from 'react-icons/fi'
+import { 
+  FiEye, FiSearch, FiDollarSign, FiUsers, FiBook, 
+  FiChevronRight, FiChevronLeft, FiPlay, FiClock,
+  FiBarChart2, FiStar, FiGlobe, FiUser
+} from 'react-icons/fi'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import Layout from '@/components/Layout'
+import { courseApi, Course, CoursesResponse } from '@/lib/courseApi'
 
-interface Course {
-  id: number
-  title: string
-  description: string
-  type: string
-  price: string
-  discount: string
-  original_price: string
-  image: string
-  views_count: number
-  subscribers_count: number
-  active: boolean
-  content_link: string
-  intro_video_url: string
-  teacher: {
-    id: number
-    name: string
-    image: string
+// Modal Component لعرض التفاصيل
+const CourseDetailsModal = ({ 
+  course, 
+  isOpen, 
+  onClose 
+}: { 
+  course: Course | null
+  isOpen: boolean
+  onClose: () => void
+}) => {
+  if (!isOpen || !course) return null
+
+
+function getVideoType(url: string) {
+  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    return 'youtube';
+  } else if (url.includes('vimeo.com')) {
+    return 'vimeo';
+  } else {
+    return 'direct';
   }
-  stage: {
-    id: number
-    name: string
-  }
-  subject: {
-    id: number
-    name: string
-  }
-  country: {
-    id: number
-    name: string
-  }
-  details: Array<{
-    id: number
-    title: string
-    content_type: string
-  }>
 }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CourseModal = ({ course, isOpen, onClose, onUpdate }: { course: Course | null, isOpen: boolean, onClose: () => void, onUpdate: (data: any) => Promise<void> }) => {
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    stage_id: '',
-    subject_id: '',
-    country_id: '',
-    type: '',
-    price: '',
-    discount: '',
-    what_you_will_learn: '',
-    intro_video_url: '',
-    image: null as File | null
-  })
 
-  useEffect(() => {
-    if (course) {
-      setFormData({
-        title: course.title,
-        description: course.description,
-        stage_id: course.stage.id.toString(),
-        subject_id: course.subject.id.toString(),
-        country_id: course.country.id.toString(),
-        type: course.type,
-        price: course.price,
-        discount: course.discount,
-        what_you_will_learn: course.details.map(d => d.title).join(', '),
-        intro_video_url: course.intro_video_url || '',
-        image: null
-      })
+// دالة لاستخراج YouTube ID
+function getYouTubeId(url: string) {
+  const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+  const match = url.match(regex);
+  return match ? match[1] : null;
+}
+
+// دالة لاستخراج Vimeo ID
+function getVimeoId(url: string) {
+  const regex = /vimeo\.com\/(\d+)/;
+  const match = url.match(regex);
+  return match ? match[1] : null;
+}
+
+
+
+
+
+
+return (
+  <div className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fadeIn">
+    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-scaleIn">
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h2 className="text-3xl font-bold text-white mb-2">{course.title}</h2>
+          <p className="text-gray-300 text-lg">{course.description}</p>
+        </div>
+        <button 
+          onClick={onClose}
+          className="text-gray-400 hover:text-white transition-all duration-300 transform hover:rotate-90"
+        >
+          <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">
+            <span className="text-xl">×</span>
+          </div>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* الفيديو والإحصائيات */}
+     <div className="space-y-6">
+  {course.intro_video_url ? (
+    (() => {
+      const videoType = getVideoType(course.intro_video_url);
+      
+      switch (videoType) {
+        case 'youtube':
+          const youtubeId = getYouTubeId(course.intro_video_url);
+          return (
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-black">
+              <iframe
+                src={`https://www.youtube.com/embed/${youtubeId}`}
+                className="w-full h-64"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="فيديو تعريفي للكورس"
+              />
+            </div>
+          );
+        
+        case 'vimeo':
+          const vimeoId = getVimeoId(course.intro_video_url);
+          return (
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-black">
+              <iframe
+                src={`https://player.vimeo.com/video/${vimeoId}`}
+                className="w-full h-64"
+                frameBorder="0"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                title="فيديو تعريفي للكورس"
+              />
+            </div>
+          );
+        
+        default:
+          return (
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-black">
+              <video 
+                className="w-full h-64 object-cover"
+                controls
+                controlsList="nodownload"
+                poster={course.image}
+                preload="metadata"
+              >
+                <source src={course.intro_video_url} type="video/mp4" />
+                <source src={course.intro_video_url} type="video/webm" />
+                المتصفح لا يدعم تشغيل الفيديو
+              </video>
+            </div>
+          );
+      }
+    })()
+  ) : (
+    // عرض الصورة فقط إذا مافيش فيديو
+    <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+      <img 
+        src={course.image} 
+        alt={course.title}
+        className="w-full h-64 object-cover"
+      />
+      <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+        <div className="bg-gray-700 bg-opacity-70 text-white p-4 rounded-full">
+          <FiPlay size={24} className="opacity-60" />
+        </div>
+      </div>
+    </div>
+  )}
+
+          {/* الإحصائيات */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-700 rounded-xl p-4 text-center hover:bg-gray-600 transition-all duration-300 transform hover:scale-105">
+              <FiUsers className="text-blue-400 text-2xl mx-auto mb-2" />
+              <div className="text-white font-bold text-xl">{course.subscribers_count}</div>
+              <div className="text-gray-400 text-sm">مشترك</div>
+            </div>
+            <div className="bg-gray-700 rounded-xl p-4 text-center hover:bg-gray-600 transition-all duration-300 transform hover:scale-105">
+              <FiBarChart2 className="text-green-400 text-2xl mx-auto mb-2" />
+              <div className="text-white font-bold text-xl">{course.views_count}</div>
+              <div className="text-gray-400 text-sm">مشاهدة</div>
+            </div>
+          </div>
+        </div>
+
+        {/* التفاصيل */}
+        <div className="space-y-6">
+          {/* معلومات المعلم */}
+          <div className="bg-gray-700 rounded-2xl p-6 hover:bg-gray-600 transition-all duration-300">
+            <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+              <FiUser className="ml-2 text-blue-400" />
+              معلومات المعلم
+            </h3>
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <img 
+                src={course.teacher.image} 
+                alt={course.teacher.name}
+                className="w-16 h-16 rounded-full border-2 border-blue-400"
+              />
+              <div>
+                <div className="text-white font-bold text-lg">{course.teacher.name}</div>
+                <div className="text-gray-300">مدرس متخصص</div>
+              </div>
+            </div>
+          </div>
+
+          {/* معلومات الكورس */}
+          <div className="bg-gray-700 rounded-2xl p-6 hover:bg-gray-600 transition-all duration-300">
+            <h3 className="text-xl font-bold text-white mb-4">معلومات الكورس</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center text-yellow-400">
+                <FiDollarSign className="ml-2" />
+                <span>السعر: {course.price} جنيه</span>
+              </div>
+              <div className="flex items-center text-green-400">
+                <FiGlobe className="ml-2" />
+                <span>{course.country.name}</span>
+              </div>
+              <div className="flex items-center text-blue-400">
+                <FiBook className="ml-2" />
+                <span>{course.subject.name}</span>
+              </div>
+              <div className="flex items-center text-purple-400">
+                <FiStar className="ml-2" />
+                <span>{course.stage?.name}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ماذا سوف تتعلم */}
+          {course.details.length > 0 && (
+            <div className="bg-gray-700 rounded-2xl p-6 hover:bg-gray-600 transition-all duration-300">
+              <h3 className="text-xl font-bold text-white mb-4">ماذا سوف تتعلم</h3>
+              <div className="grid gap-2">
+                {course.details.map((detail, index) => (
+                  <div 
+                    key={detail.id}
+                    className="flex items-center text-gray-300 hover:text-white transition-colors duration-300 animate-fadeIn"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <div className="w-2 h-2 bg-green-400 rounded-full ml-3"></div>
+                    {detail.title}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+)
+}
+
+// Toggle Switch Component
+const ToggleSwitch = ({ 
+  active, 
+  onToggle, 
+  courseId 
+}: { 
+  active: boolean
+  onToggle: (courseId: number, newStatus: boolean) => void
+  courseId: number
+}) => {
+  const handleToggle = async () => {
+    try {
+      await onToggle(courseId, !active)
+    } catch (error) {
+      // لا تعمل شيء - الخطأ بيتعامل معاه في الدالة الأساسية
     }
-  }, [course])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    await onUpdate(formData)
   }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData(prev => ({ ...prev, image: e.target.files![0] }))
-    }
-  }
-
-  if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold mb-6">تعديل الكورس</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">عنوان الكورس</label>
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">السعر</label>
-              <input
-                type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">الخصم (%)</label>
-              <input
-                type="number"
-                name="discount"
-                value={formData.discount}
-                onChange={handleChange}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">النوع</label>
-              <select
-                name="type"
-                value={formData.type}
-                onChange={handleChange}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
-                required
-              >
-                <option value="free">مجاني</option>
-                <option value="paid">مدفوع</option>
-              </select>
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">الوصف</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={3}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
-                required
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">ماذا سوف تتعلم</label>
-              <textarea
-                name="what_you_will_learn"
-                value={formData.what_you_will_learn}
-                onChange={handleChange}
-                rows={2}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">رابط الفيديو التعريفي</label>
-              <input
-                type="url"
-                name="intro_video_url"
-                value={formData.intro_video_url}
-                onChange={handleChange}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">صورة الكورس</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
-              />
-            </div>
-          </div>
-          <div className="flex gap-4 pt-4">
-            <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded-xl">حفظ التغييرات</button>
-            <button type="button" onClick={onClose} className="bg-gray-600 text-white px-6 py-2 rounded-xl">إلغاء</button>
-          </div>
-        </form>
-      </div>
+    <button
+      onClick={handleToggle}
+      className={`relative inline-flex items-center h-7 rounded-full w-14 transition-all duration-500 ${
+        active ? 'bg-gradient-to-r from-green-500 to-green-600 shadow-lg shadow-green-500/30' : 'bg-gradient-to-r from-gray-600 to-gray-700 shadow-inner'
+      } transform hover:scale-105 active:scale-95`}
+    >
+      <span
+        className={`inline-block w-5 h-5 transform bg-white rounded-full shadow-lg transition-all duration-500 ${
+          active ? 'translate-x-8' : 'translate-x-1'
+        }`}
+      />
+    </button>
+  )
+}
+
+// Pagination Component
+const Pagination = ({ 
+  currentPage, 
+  totalPages, 
+  onPageChange 
+}: { 
+  currentPage: number
+  totalPages: number
+  onPageChange: (page: number) => void
+}) => {
+  const pages = []
+  const maxVisiblePages = 5
+
+  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
+  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+
+  if (endPage - startPage + 1 < maxVisiblePages) {
+    startPage = Math.max(1, endPage - maxVisiblePages + 1)
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i)
+  }
+
+  return (
+    <div className="flex justify-center items-center space-x-2 space-x-reverse mt-8 animate-fadeIn">
+      {/* زر السابق */}
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className={`p-3 rounded-xl transition-all duration-300 ${
+          currentPage === 1 
+            ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
+            : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:scale-105 shadow-lg'
+        }`}
+      >
+        <FiChevronRight size={20} />
+      </button>
+
+      {/* أرقام الصفحات */}
+      {pages.map(page => (
+        <button
+          key={page}
+          onClick={() => onPageChange(page)}
+          className={`px-4 py-3 rounded-xl font-bold transition-all duration-300 ${
+            page === currentPage
+              ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-500/30 scale-110'
+              : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white hover:scale-105'
+          }`}
+        >
+          {page}
+        </button>
+      ))}
+
+      {/* زر التالي */}
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className={`p-3 rounded-xl transition-all duration-300 ${
+          currentPage === totalPages
+            ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+            : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:scale-105 shadow-lg'
+        }`}
+      >
+        <FiChevronLeft size={20} />
+      </button>
     </div>
   )
 }
 
 export default function CoursesPage() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [courses, setCourses] = useState<Course[]>([])
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [stages, setStages] = useState<any[]>([])
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [subjects, setSubjects] = useState<any[]>([])
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [countries, setCountries] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('table')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [showFilters, setShowFilters] = useState(false)
-  const [filters, setFilters] = useState({
-    stage: '',
-    subject: '',
-    country: '',
-    type: '',
-    minPrice: '',
-    maxPrice: '',
-    minSubscribers: '',
-    maxSubscribers: ''
+  const [coursesData, setCoursesData] = useState<CoursesResponse>({
+    data: [],
+    current_page: 1,
+    last_page: 1,
+    per_page: 5,
+    total: 0
   })
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
-
-  const fetchCourses = async () => {
+  // ✅ جلب الكورسات
+  const fetchCourses = async (page: number = 1) => {
     try {
-      const res = await fetch(`${API_URL}/course/index`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          filters: {},
-          orderBy: "id",
-          orderByDirection: "asc",
-          perPage: 100,
-          paginate: true,
-          delete: false
-        })
-      })
-      const data = await res.json()
-      if (data.status === 200) {
-        setCourses(data.data || [])
-      }
+      const data = await courseApi.getCourses(page, 5)
+      setCoursesData(data)
     } catch (err) {
       toast.error('حدث خطأ في تحميل الكورسات')
-    } finally {
-      setLoading(false)
+      console.error('Fetch courses error:', err)
     }
   }
 
-  const fetchFiltersData = async () => {
+  // ✅ تبديل حالة الكورس
+  const toggleActive = async (courseId: number, newStatus: boolean) => {
+    const originalCourses = [...coursesData.data]
+    
+    // تحديث فوري في الـ UI
+    setCoursesData(prev => ({
+      ...prev,
+      data: prev.data.map(c => 
+        c.id === courseId ? { ...c, active: newStatus } : c
+      )
+    }))
+    
     try {
-      // في تطبيق حقيقي، ستقوم بجلب هذه البيانات من API منفصل
-      // هنا نقوم بإنشاء بيانات وهمية للتوضيح
-      const mockStages = [
-        { id: 1, name: 'المرحلة الابتدائية' },
-        { id: 2, name: 'المرحلة الإعدادية' },
-        { id: 3, name: 'المرحلة الثانوية' }
-      ]
-      
-      const mockSubjects = [
-        { id: 1, name: 'الرياضيات' },
-        { id: 2, name: 'العلوم' },
-        { id: 3, name: 'اللغة العربية' },
-        { id: 4, name: 'اللغة الإنجليزية' }
-      ]
-      
-      const mockCountries = [
-        { id: 1, name: 'مصر' },
-        { id: 2, name: 'السعودية' },
-        { id: 3, name: 'الإمارات' }
-      ]
-      
-      setStages(mockStages)
-      setSubjects(mockSubjects)
-      setCountries(mockCountries)
+      await courseApi.toggleActive(courseId, newStatus)
+      toast.success(`تم ${newStatus ? 'تفعيل' : 'إيقاف'} الكورس بنجاح ✅`)
     } catch (err) {
-      console.error('Failed to load filter data', err)
+      // الرجوع للحالة الأصلية إذا فشل الطلب
+      setCoursesData(prev => ({
+        ...prev,
+        data: originalCourses
+      }))
+      toast.error('فشل في تحديث حالة الكورس ❌')
     }
   }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updateCourse = async (courseId: number, formData: any) => {
-    try {
-      const payload = new FormData()
-      Object.keys(formData).forEach(key => {
-        if (formData[key] !== null && formData[key] !== undefined) {
-          payload.append(key, formData[key])
-        }
-      })
 
-      const res = await fetch(`${API_URL}/course/update/${courseId}`, {
-        method: 'POST',
-        body: payload
-      })
-      const data = await res.json()
-      
-      if (data.success) {
-        toast.success('تم التحديث بنجاح')
-        fetchCourses()
-        setIsModalOpen(false)
-      } else {
-        toast.error(data.message || 'فشل في التحديث')
-      }
-    } catch (err) {
-      toast.error('حدث خطأ أثناء التحديث')
-    }
+  // ✅ فتح تفاصيل الكورس
+  const openCourseDetails = (course: Course) => {
+    setSelectedCourse(course)
+    setIsModalOpen(true)
   }
+
+  // ✅ تغيير الصفحة
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    fetchCourses(page)
+  }
+
+  // ✅ البحث
+  const filteredCourses = coursesData.data.filter(course =>
+    course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.subject.name.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   useEffect(() => {
-    fetchCourses()
-    fetchFiltersData()
+    fetchCourses(currentPage)
   }, [])
-
-  const filteredCourses = courses.filter(course => {
-    // تطبيق البحث النصي
-    const matchesSearch = 
-      course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.subject.name.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    // تطبيق الفلاتر
-    const matchesStage = !filters.stage || course.stage.id.toString() === filters.stage
-    const matchesSubject = !filters.subject || course.subject.id.toString() === filters.subject
-    const matchesCountry = !filters.country || course.country.id.toString() === filters.country
-    const matchesType = !filters.type || course.type === filters.type
-    const matchesMinPrice = !filters.minPrice || parseFloat(course.price) >= parseFloat(filters.minPrice)
-    const matchesMaxPrice = !filters.maxPrice || parseFloat(course.price) <= parseFloat(filters.maxPrice)
-    const matchesMinSubscribers = !filters.minSubscribers || course.subscribers_count >= parseInt(filters.minSubscribers)
-    const matchesMaxSubscribers = !filters.maxSubscribers || course.subscribers_count <= parseInt(filters.maxSubscribers)
-    
-    return matchesSearch && 
-           matchesStage && 
-           matchesSubject && 
-           matchesCountry && 
-           matchesType && 
-           matchesMinPrice && 
-           matchesMaxPrice && 
-           matchesMinSubscribers && 
-           matchesMaxSubscribers
-  })
-
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }))
-  }
-
-  const resetFilters = () => {
-    setFilters({
-      stage: '',
-      subject: '',
-      country: '',
-      type: '',
-      minPrice: '',
-      maxPrice: '',
-      minSubscribers: '',
-      maxSubscribers: ''
-    })
-  }
-
-  const hasActiveFilters = Object.values(filters).some(value => value !== '')
-
-  if (loading) {
-    return (
-      <Layout>
-        <div className="p-6 bg-gray-800 min-h-screen flex items-center justify-center">
-          <div className="text-white">جار التحميل...</div>
-        </div>
-      </Layout>
-    )
-  }
 
   return (
     <Layout>
       <div className="p-6 bg-gray-800 min-h-screen">
-        <ToastContainer />
+        <ToastContainer
+          position="top-left"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"
+        />
         
-        <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
-          <h1 className="text-3xl font-bold">إدارة الكورسات</h1>
+        {/* Header */}
+        <div className="flex flex-wrap justify-between items-center mb-8 gap-4 animate-fadeIn">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              إدارة الكورسات
+            </h1>
+            <p className="text-gray-400">
+              عرض {coursesData.data.length} من أصل {coursesData.total} كورس
+            </p>
+          </div>
           
-          <div className="flex gap-4 flex-wrap">
-            <div className="relative">
-              <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="ابحث عن كورس، معلم، أو مادة..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-gray-700 border border-gray-600 text-white p-2 rounded-lg pl-10"
-              />
-            </div>
-            
-            <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className={`px-4 py-2 rounded-lg flex items-center ${showFilters ? 'bg-blue-600' : 'bg-gray-700'} text-white`}
-            >
-              <FiFilter className="ml-2" /> فلاتر
-              {hasActiveFilters && (
-                <span className="mr-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              )}
-            </button>
-            
-            <div className="flex bg-gray-700 rounded-lg p-1">
-                <button
-                onClick={() => setViewMode('table')}
-                className={`p-2 rounded-lg ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'text-gray-300'}`}
-              >
-                Table
-              </button>
-              <button
-                onClick={() => setViewMode('card')}
-                className={`p-2 rounded-lg ${viewMode === 'card' ? 'bg-blue-600 text-white' : 'text-gray-300'}`}
-              >
-                Card
-              </button>
-            
-            </div>
-            
-          
+          <div className="relative">
+            <FiSearch className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="ابحث عن كورس، معلم، أو مادة..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-gray-700 border-2 border-gray-600 text-white p-4 rounded-2xl pl-12 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 w-80 focus:shadow-lg focus:shadow-blue-500/20"
+            />
           </div>
         </div>
 
-        {/* قسم الفلاتر */}
-        {showFilters && (
-          <div className="bg-gray-700 rounded-2xl p-6 mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">فلاتر البحث</h2>
-              <div className="flex gap-2">
-                {hasActiveFilters && (
-                  <button 
-                    onClick={resetFilters}
-                    className="text-sm text-gray-300 hover:text-white flex items-center"
-                  >
-                    <FiX className="ml-1" /> إعادة الضبط
-                  </button>
-                )}
-                <button 
-                  onClick={() => setShowFilters(false)}
-                  className="text-gray-400 hover:text-white"
-                >
-                  <FiX size={20} />
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">المرحلة الدراسية</label>
-                <select
-                  value={filters.stage}
-                  onChange={(e) => handleFilterChange('stage', e.target.value)}
-                  className="w-full bg-gray-600 border border-gray-500 rounded-lg p-2"
-                >
-                  <option value="">جميع المراحل</option>
-                  {stages.map(stage => (
-                    <option key={stage.id} value={stage.id}>{stage.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">المادة</label>
-                <select
-                  value={filters.subject}
-                  onChange={(e) => handleFilterChange('subject', e.target.value)}
-                  className="w-full bg-gray-600 border border-gray-500 rounded-lg p-2"
-                >
-                  <option value="">جميع المواد</option>
-                  {subjects.map(subject => (
-                    <option key={subject.id} value={subject.id}>{subject.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">البلد</label>
-                <select
-                  value={filters.country}
-                  onChange={(e) => handleFilterChange('country', e.target.value)}
-                  className="w-full bg-gray-600 border border-gray-500 rounded-lg p-2"
-                >
-                  <option value="">جميع البلدان</option>
-                  {countries.map(country => (
-                    <option key={country.id} value={country.id}>{country.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">نوع الكورس</label>
-                <select
-                  value={filters.type}
-                  onChange={(e) => handleFilterChange('type', e.target.value)}
-                  className="w-full bg-gray-600 border border-gray-500 rounded-lg p-2"
-                >
-                  <option value="">جميع الأنواع</option>
-                  <option value="free">مجاني</option>
-                  <option value="paid">مدفوع</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">أقل سعر</label>
-                <input
-                  type="number"
-                  value={filters.minPrice}
-                  onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                  className="w-full bg-gray-600 border border-gray-500 rounded-lg p-2"
-                  placeholder="0"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">أعلى سعر</label>
-                <input
-                  type="number"
-                  value={filters.maxPrice}
-                  onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                  className="w-full bg-gray-600 border border-gray-500 rounded-lg p-2"
-                  placeholder="أي سعر"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">أقل عدد مشتركين</label>
-                <input
-                  type="number"
-                  value={filters.minSubscribers}
-                  onChange={(e) => handleFilterChange('minSubscribers', e.target.value)}
-                  className="w-full bg-gray-600 border border-gray-500 rounded-lg p-2"
-                  placeholder="0"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">أعلى عدد مشتركين</label>
-                <input
-                  type="number"
-                  value={filters.maxSubscribers}
-                  onChange={(e) => handleFilterChange('maxSubscribers', e.target.value)}
-                  className="w-full bg-gray-600 border border-gray-500 rounded-lg p-2"
-                  placeholder="أي عدد"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {filteredCourses.length === 0 ? (
-          <div className="bg-gray-700 rounded-2xl p-8 text-center">
-            <p className="text-gray-300">لا توجد كورسات تطابق معايير البحث</p>
-          </div>
-        ) : viewMode === 'card' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredCourses.map((course) => (
-              <div key={course.id} className="bg-gray-700 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
-                <img src={course.image} alt={course.title} className="w-full h-48 object-cover" />
-                
-                <div className="p-4">
-                  <h3 className="text-lg font-bold mb-2">{course.title}</h3>
-                  <p className="text-gray-300 text-sm mb-3 line-clamp-2">{course.description}</p>
-                  
-                  <div className="flex items-center justify-between mb-3">
-                    <span className={`px-2 py-1 rounded text-xs ${course.type === 'free' ? 'bg-green-600' : 'bg-blue-600'} text-white`}>
-                      {course.type === 'free' ? 'مجاني' : 'مدفوع'}
-                    </span>
-                    <div className="flex items-center text-yellow-400">
-                      <FiDollarSign />
-                      <span className="ml-1">{course.price}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between text-sm text-gray-400 mb-3">
-                    <div className="flex items-center">
-                      <FiUsers className="ml-1" />
-                      <span>{course.subscribers_count}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <FiEye className="ml-1" />
-                      <span>{course.views_count}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <img src={course.teacher.image} alt={course.teacher.name} className="w-8 h-8 rounded-full" />
-                    <span className="text-sm">{course.teacher.name}</span>
-                  </div>
-
-                  <div className="flex justify-between mt-4">
-                    <button 
-                      onClick={() => {
-                        setEditingCourse(course)
-                        setIsModalOpen(true)
-                      }}
-                      className="bg-yellow-600 text-white p-2 rounded-lg"
-                      title="تعديل"
-                    >
-                      <FiEdit />
-                    </button>
-                    <button className="bg-red-600 text-white p-2 rounded-lg" title="حذف">
-                      <FiTrash2 />
-                    </button>
-                    <button className="bg-green-600 text-white p-2 rounded-lg" title="عرض">
-                      <FiEye />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="bg-gray-700 rounded-2xl overflow-hidden">
+        {/* Courses Table */}
+        <div className="bg-gray-700 rounded-3xl overflow-hidden shadow-2xl animate-slideUp">
+          <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-600">
-                <tr>
-                  <th className="p-4 text-center">الكورس</th>
-                  <th className="p-4 text-center">المعلم</th>
-                  <th className="p-4 text-center">المادة</th>
-                  <th className="p-4 text-center">المرحلة</th>
-                  <th className="p-4 text-center">السعر</th>
-                  <th className="p-4 text-center">المشتركين</th>
-                  <th className="p-4 text-center">المشاهدات</th>
-                  <th className="p-4 text-center">الإجراءات</th>
-                </tr>
+              <thead className="bg-gradient-to-r from-gray-600 to-gray-700">
+           <tr>
+  <th className="p-6 text-right font-bold text-lg">Course</th>
+  <th className="p-6 text-right font-bold text-lg">Teacher</th>
+  <th className="p-6 text-right font-bold text-lg">Subject</th>
+  <th className="p-6 text-right font-bold text-lg">Level</th>
+  <th className="p-6 text-right font-bold text-lg">Price</th>
+  <th className="p-6 text-right font-bold text-lg">Subscribers</th>
+  <th className="p-6 text-right font-bold text-lg">Views</th>
+  <th className="p-6 text-right font-bold text-lg">Status</th>
+  <th className="p-6 text-right font-bold text-lg">Details</th>
+</tr>
+
               </thead>
               <tbody>
-                {filteredCourses.map((course) => (
-                  <tr key={course.id} className="border-t border-gray-600 hover:bg-gray-600">
-                    <td className="p-4">
-                      <div className="flex items-center">
+                {filteredCourses.map((course, index) => (
+                  <tr 
+                    key={course.id} 
+                    className="border-t border-gray-600 hover:bg-gray-600 transition-all duration-500 group animate-fadeIn"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <td className="p-6">
+                      <div className="flex items-center space-x-4 space-x-reverse group-hover:transform group-hover:translate-x-2 transition-transform duration-300">
+                    
                         <div>
-                          <div className="font-semibold">{course.title}</div>
-                          <div className="text-sm text-gray-300">{course.type === 'free' ? 'مجاني' : 'مدفوع'}</div>
+                          <div className="font-bold text-white text-lg group-hover:text-blue-300 transition-colors duration-300">
+                            {course.title}
+                          </div>
+                          <div className={`text-sm font-medium ${
+                            course.type === 'free' ? 'text-green-400' : 'text-yellow-400'
+                          }`}>
+                            {course.type === 'free' ? '🆓 مجاني' : '💰 مدفوع'}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="p-4">
-                      <div className="flex items-center">
-                        {course.teacher.name}
+                    <td className="p-6">
+                      <div className="flex items-center space-x-3 space-x-reverse">
+                        <img 
+                          src={course.teacher.image} 
+                          alt={course.teacher.name}
+                          className="w-10 h-10 rounded-full border-2 border-blue-400 shadow-lg"
+                        />
+                        <span className="text-white font-medium">{course.teacher.name}</span>
                       </div>
                     </td>
-                    <td className="p-4">{course.subject.name}</td>
-                    <td className="p-4">{course.stage.name}</td>
-                    <td className="p-4">
-                      <div className="flex items-center text-yellow-400">
-                        <FiDollarSign />
-                        <span className="ml-1">{course.price}</span>
+                    <td className="p-6">
+                      <div className="bg-blue-500/20 text-blue-400 px-4 py-2 rounded-xl font-medium text-center">
+                        {course.subject.name}
                       </div>
                     </td>
-                    <td className="p-4">
-                      <div className="flex items-center">
+                    <td className="p-6">
+                      <div className="bg-purple-500/20 text-purple-400 px-4 py-2 rounded-xl font-medium text-center">
+                        {course.stage?.name || 'Public'}
+                      </div>
+                    </td>
+                    <td className="p-6">
+                      <div className="flex items-center justify-center text-yellow-400 font-bold text-lg">
+                        <FiDollarSign className="ml-1" />
+                        {course?.price}
+                      </div>
+                    </td>
+                    <td className="p-6">
+                      <div className="flex items-center justify-center text-blue-400 font-bold text-lg">
                         <FiUsers className="ml-1" />
-                        {course.subscribers_count}
+                        {course?.subscribers_count}
                       </div>
                     </td>
-                    <td className="p-4">
-                      <div className="flex items-center">
-                        <FiEye className="ml-1" />
+                    <td className="p-6">
+                      <div className="flex items-center justify-center text-green-400 font-bold text-lg">
+                        <FiBarChart2 className="ml-1" />
                         {course.views_count}
                       </div>
                     </td>
-                    <td className="p-4">
-                      <div className="flex gap-2">
+                    <td className="p-6">
+                      <div className="flex justify-center">
+                        <ToggleSwitch 
+                          active={course.active} 
+                          onToggle={toggleActive}
+                          courseId={course.id}
+                        />
+                      </div>
+                    </td>
+                    <td className="p-6">
+                      <div className="flex justify-center">
                         <button 
-                          onClick={() => {
-                            setEditingCourse(course)
-                            setIsModalOpen(true)
-                          }}
-                          className="bg-yellow-600 text-white p-2 rounded-lg"
-                          title="تعديل"
+                          onClick={() => openCourseDetails(course)}
+                          className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white p-3 rounded-xl transition-all duration-300 transform hover:scale-110 hover:shadow-lg hover:shadow-green-500/30 active:scale-95"
+                          title="عرض التفاصيل"
                         >
-                          <FiEdit />
-                        </button>
-                        <button className="bg-red-600 text-white p-2 rounded-lg" title="حذف">
-                          <FiTrash2 />
-                        </button>
-                        <button className="bg-green-600 text-white p-2 rounded-lg" title="عرض">
-                          <FiEye />
+                          <FiEye size={18} />
                         </button>
                       </div>
                     </td>
@@ -687,14 +544,56 @@ export default function CoursesPage() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Pagination */}
+        {coursesData.last_page > 1 && (
+          <Pination 
+            currentPage={coursesData.current_page}
+            totalPages={coursesData.last_page}
+            onPageChange={handlePageChange}
+          />
         )}
 
-        <CourseModal
-          course={editingCourse}
+        {/* Empty State */}
+        {filteredCourses.length === 0 && (
+          <div className="bg-gray-700 rounded-3xl p-16 text-center animate-fadeIn mt-8">
+            <FiBook className="text-8xl text-gray-500 mx-auto mb-6 opacity-50" />
+            <p className="text-gray-300 text-2xl font-light">لا توجد كورسات تطابق معايير البحث</p>
+          </div>
+        )}
+
+        {/* Modal */}
+        <CourseDetailsModal
+          course={selectedCourse}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onUpdate={(data) => updateCourse(editingCourse!.id, data)}
         />
+
+        {/* CSS Animations */}
+        <style jsx>{`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes slideUp {
+            from { opacity: 0; transform: translateY(50px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+          }
+          .animate-fadeIn {
+            animation: fadeIn 0.6s ease-out;
+          }
+          .animate-slideUp {
+            animation: slideUp 0.5s ease-out;
+          }
+          .animate-scaleIn {
+            animation: scaleIn 0.4s ease-out;
+          }
+        `}</style>
       </div>
     </Layout>
   )

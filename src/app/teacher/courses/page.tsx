@@ -97,7 +97,7 @@ const CourseModal = ({
       setFormData({
         title: course.title || '',
         description: course.description || '',
-        stage_id: course.stage.id.toString(),
+        stage_id: course.stage?.id.toString(),
         subject_id: course.subject.id.toString(),
         country_id: course.country.id.toString(),
         type: course.type || '',
@@ -318,7 +318,7 @@ export default function CoursesPage() {
     maxSubscribers: ''
   })
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
+  const API_URL = '/api'; // بدل ما تستخدم https://back.professionalacademyedu.com/api مباشرة
 
   const fetchCourses = async () => {
     try {
@@ -328,7 +328,7 @@ export default function CoursesPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          filters: {},
+          filters: { "teacher_id": Cookies.get('teacher_id') || '' },
           orderBy: "id",
           orderByDirection: "asc",
           perPage: 100,
@@ -782,7 +782,7 @@ export default function CoursesPage() {
                       </div>
                     </td>
                     <td className="p-4">{course.subject.name}</td>
-                    <td className="p-4">{course.stage.name}</td>
+                    <td className="p-4">{course.stage?.name}</td>
                     <td className="p-4">
                       <div className="flex items-center text-yellow-400">
                         <FiDollarSign />

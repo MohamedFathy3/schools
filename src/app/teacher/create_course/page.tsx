@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { FiPlus, FiX, FiVideo, FiBook, FiDollarSign, FiPercent, FiLink, FiUpload } from 'react-icons/fi'
+import { FiPlus, FiX, FiVideo, FiBook, FiDollarSign, FiPercent, FiLink, FiUpload, FiUsers } from 'react-icons/fi'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import Cookies from 'js-cookie'
@@ -30,12 +30,15 @@ export default function AddCoursePage() {
     stage_id: '',
     subject_id: '',
     country_id: '',
-    type: 'online',
+    type: 'online', //online,recorded
     original_price: '',
     discount: '',
     what_you_will_learn: '',
     intro_video_url: '',
-    image: null as File | null
+    image: null as File | null,
+    course_type: 'group', // 'group' أو 'private'
+    currency: 'EGP',
+    count_student: null as number | null
   })
 
   const [stages, setStages] = useState<Stage[]>([])
@@ -45,7 +48,7 @@ export default function AddCoursePage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   const router = useRouter()
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
+  const API_URL = '/api'; // بدل ما تستخدم https://back.professionalacademyedu.com/api مباشرة
 
   // جلب التوكن من localStorage
   const getToken = () => {
@@ -112,7 +115,10 @@ export default function AddCoursePage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: name === 'count_student' ? (value ? parseInt(value) : null) : value 
+    }))
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,52 +135,54 @@ export default function AddCoursePage() {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setIsLoading(true)
 
-    try {
-      const token = getToken()
-      if (!token) {
-        toast.error('يجب تسجيل الدخول أولاً')
-        return
-      }
-
-      const payload = new FormData()
-      
-      // إضافة جميع الحقول إلى FormData
-      Object.keys(formData).forEach(key => {
-        const value = formData[key as keyof typeof formData]
-        if (value !== null && value !== undefined && value !== '') {
-          if (value instanceof File) {
-            payload.append(key, value)
-          } else {
-            payload.append(key, value.toString())
-          }
-        }
-      })
-
-      const res = await fetch(`${API_URL}/course`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: payload
-      })
-
-      const data = await res.json()
-        toast.success('تم إضافة الكورس بنجاح!')
-      if (data.success) {
-        router.push('/teacher/courses')
-      } else {
-        toast.error(data.message || 'فشل في إضافة الكورس')
-      }
-    } catch (err) {
-      toast.error('حدث خطأ أثناء إضافة الكورس')
-    } finally {
-      setIsLoading(false)
+  try {
+    const token = getToken()
+    if (!token) {
+      toast.error('يجب تسجيل الدخول أولاً')
+      return
     }
+
+    const payload = new FormData()
+    
+    Object.keys(formData).forEach(key => {
+      const value = formData[key as keyof typeof formData]
+      if (value !== null && value !== undefined && value !== '') {
+        if (value instanceof File) {
+          payload.append(key, value)
+        } else {
+          payload.append(key, value.toString())
+        }
+      }
+    })
+
+    const res = await fetch(`${API_URL}/course`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: payload
+    })
+
+    const data = await res.json()
+    
+    // تحقق متعدد من حالات النجاح المحتملة
+    if (data.result === "Success" || data.status === 200 || data.Success) {
+      toast.success(data.message || 'تم إضافة الكورس بنجاح!')
+      router.push('/teacher/courses')
+    } else {
+      toast.error(data.message || 'فشل في إضافة الكورس')
+    }
+  } catch (err) {
+    console.error('Error adding course:', err)
+    toast.error('حدث خطأ أثناء إضافة الكورس')
+  } finally {
+    setIsLoading(false)
   }
+}
 
   return (
     <Layoutteacher>
@@ -219,9 +227,11 @@ export default function AddCoursePage() {
                 required
                 className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="online">online</option>
-                <option value="recorded">recorded</option>
+                <option value="online">اونلاين</option>
+                <option value="recorded">مسجل</option>
               </select>
+
+              
             </div>
           </div>
 
@@ -273,7 +283,7 @@ export default function AddCoursePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">الماده *</label>
+              <label className="block text-sm font-semibold mb-2">المادة *</label>
               <select
                 name="subject_id"
                 value={formData.subject_id}
@@ -281,7 +291,7 @@ export default function AddCoursePage() {
                 required
                 className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">اختر الماده</option>
+                <option value="">اختر المادة</option>
                 {subjects.map(subject => (
                   <option key={subject.id} value={subject.id}>{subject.name}</option>
                 ))}
@@ -289,8 +299,59 @@ export default function AddCoursePage() {
             </div>
           </div>
 
-          {/* التسعير */}
+          {/* نوع الكورس وعدد الطلاب */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-semibold mb-2">نوع الكورس *</label>
+              <select
+                name="course_type"
+                value={formData.course_type}
+                onChange={handleInputChange}
+                required
+                className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="group">مجموعة</option>
+                <option value="private">خاص</option>
+              </select>
+            </div>
+
+            {formData.course_type === 'group' && (
+              <div>
+                <label className="block text-sm font-semibold mb-2">عدد الطلاب *</label>
+                <div className="relative">
+                  <FiUsers className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="number"
+                    name="count_student"
+                    value={formData.count_student || ''}
+                    onChange={handleInputChange}
+                    required
+                    min="1"
+                    className="w-full pl-10 pr-3 py-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="أدخل عدد الطلاب"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* التسعير */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-semibold mb-2">العملة *</label>
+              <select
+                name="currency"
+                value={formData.currency}
+                onChange={handleInputChange}
+                required
+                className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="EGP">جنيه مصري (EGP)</option>
+                <option value="SAR">ريال سعودي (SAR)</option>
+                <option value="AED">درهم إماراتي (AED)</option>
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-semibold mb-2">السعر الأصلي *</label>
               <div className="relative">

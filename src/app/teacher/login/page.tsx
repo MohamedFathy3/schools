@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTeacherAuth } from '@/contexts/teacherAuthContext'
 import { Toaster } from 'react-hot-toast'
 import toast from 'react-hot-toast'
+import Link from 'next/link'
 import '@/styles/globals.css'
 
 // أيقونات
@@ -31,14 +32,12 @@ export default function AuthPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    // تحقق من صحة الإيميل
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       toast.error('البريد الإلكتروني غير صالح ❌')
       return
     }
 
-    // تحقق من الباسورد
     if (password.length < 4) {
       toast.error('كلمة المرور قصيرة جداً ❌')
       return
@@ -46,7 +45,7 @@ export default function AuthPage() {
 
     setIsLoading(true)
     try {
-      const success = await login(email, password)
+      const success = await login(email, password, remember)
       if (success) {
         toast.success('تم تسجيل الدخول بنجاح ✅')
         setTimeout(() => {
@@ -55,7 +54,6 @@ export default function AuthPage() {
       } else {
         toast.error('فشل تسجيل الدخول ❌')
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Login error:', err)
       toast.error('حدث خطأ أثناء تسجيل الدخول ❌')
@@ -65,96 +63,128 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-indigo-900 to-black relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-white via-gray-50 to-gray-100">
+      {/* خلفية النقاط المتحركة */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        {/* النقاط الكبيرة */}
+        <div className="absolute top-1/4 left-1/4 w-3 h-3 bg-blue-400 rounded-full animate-float opacity-70"></div>
+        <div className="absolute top-3/4 right-1/3 w-4 h-4 bg-indigo-400 rounded-full animate-float animation-delay-1000 opacity-60"></div>
+        <div className="absolute top-1/3 right-1/4 w-2 h-2 bg-purple-400 rounded-full animate-float animation-delay-2000 opacity-80"></div>
+        <div className="absolute bottom-1/4 left-1/3 w-3 h-3 bg-cyan-400 rounded-full animate-float animation-delay-1500 opacity-70"></div>
+        <div className="absolute top-2/3 left-1/5 w-2 h-2 bg-blue-300 rounded-full animate-float animation-delay-3000 opacity-90"></div>
+        
+        {/* النقاط المتوسطة */}
+        <div className="absolute top-1/5 right-1/5 w-1.5 h-1.5 bg-indigo-300 rounded-full animate-float animation-delay-500 opacity-80"></div>
+        <div className="absolute bottom-1/3 left-1/4 w-1.5 h-1.5 bg-purple-300 rounded-full animate-float animation-delay-2500 opacity-75"></div>
+        
+        {/* النقاط الصغيرة */}
+        <div className="absolute top-2/5 left-2/5 w-1 h-1 bg-cyan-300 rounded-full animate-float animation-delay-1800 opacity-90"></div>
+        <div className="absolute bottom-2/5 right-2/5 w-1 h-1 bg-blue-200 rounded-full animate-float animation-delay-1200 opacity-85"></div>
+      </div>
+
       <Toaster
         position="top-center"
         toastOptions={{
           duration: 4000,
           style: {
-            background: '#1f2937',
+            background: '#374151',
             color: '#fff',
-            border: '1px solid #4f46e5',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: 'bold',
+            border: '1px solid #6366f1',
+            borderRadius: '12px',
+            fontSize: '14px',
+            fontWeight: '600',
+            boxShadow: '0 10px 25px rgba(99, 102, 241, 0.3)',
           },
         }}
       />
 
-      <div className="relative z-10 w-full max-w-md p-10 mx-4 bg-black bg-opacity-60 rounded-3xl shadow-2xl border border-white/20 backdrop-blur-md">
+      <div className="relative z-10 w-full max-w-md p-10 mx-4 bg-white/95 rounded-3xl shadow-2xl border border-gray-200/60 backdrop-blur-lg">
         <div className="text-center mb-10">
-          <div className="mx-auto w-20 h-20 rounded-full bg-indigo-600 bg-opacity-80 flex items-center justify-center mb-5 shadow-lg">
+          <div className="mx-auto w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center mb-5 shadow-lg shadow-blue-500/30">
             <FiUser className="text-white text-3xl" />
           </div>
-          <h1 className="text-4xl font-extrabold text-white">تسجيل الدخول</h1>
-          <p className="text-indigo-300 mt-2 text-sm">يرجى إدخال البريد الإلكتروني وكلمة المرور</p>
+          <h1 className="text-4xl font-extrabold text-gray-800 mb-2">تسجيل الدخول</h1>
+          <p className="text-gray-600 mt-2 text-sm">يرجى إدخال البريد الإلكتروني وكلمة المرور</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* email */}
           <div>
-            <label htmlFor="email" className="block text-sm font-semibold text-indigo-300 mb-2">
+            <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
               البريد الإلكتروني
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <FiMail className="text-indigo-400" />
+                <FiMail className="text-gray-500" />
               </div>
               <input
                 type="email"
-                style={{ borderRadius: '0.75rem' }}
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="example@example.com"
                 required
-                className="w-full pr-10 pl-4 py-3 rounded-lg bg-gray-800 text-white placeholder-indigo-400 border border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                className="w-full pr-10 pl-4 py-3 rounded-xl bg-gray-50 text-gray-800 placeholder-gray-400 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
               />
             </div>
           </div>
 
           {/* password */}
           <div>
-            <label htmlFor="password" className="block text-sm font-semibold text-indigo-300 mb-2">
+            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
               كلمة المرور
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <FiLock className="text-indigo-400" />
+                <FiLock className="text-gray-500" />
               </div>
               <input
                 type="password"
-                style={{ borderRadius: '0.75rem' }}
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full pr-10 pl-4 py-3 rounded-lg bg-gray-800 text-white placeholder-indigo-400 border border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                className="w-full pr-10 pl-4 py-3 rounded-xl bg-gray-50 text-gray-800 placeholder-gray-400 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
               />
             </div>
           </div>
 
-          {/* remember me */}
-          <div className="flex items-center justify-between text-indigo-300 text-sm">
+          {/* remember me switch */}
+          <div className="flex items-center justify-between text-gray-700 text-sm">
             <label htmlFor="rememberMe" className="flex items-center cursor-pointer select-none">
-              <input
-                type="checkbox"
-                id="rememberMe"
-                checked={remember}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="mr-2"
-              />
-              <span>تذكرني</span>
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  id="rememberMe"
+                  checked={remember}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="sr-only"
+                />
+                <div className={`w-10 h-6 rounded-full transition-all duration-300 ${
+                  remember ? 'bg-blue-500' : 'bg-gray-300'
+                }`}></div>
+                <div className={`absolute left-0 top-0 w-6 h-6 rounded-full transition-all duration-300 transform ${
+                  remember ? 'translate-x-4 bg-white' : 'translate-x-0 bg-white'
+                } shadow-md border border-gray-300`}></div>
+              </div>
+              <span className="mr-2 text-gray-700">تذكرني</span>
             </label>
+
+            <Link 
+              href="/auth/signup" 
+              className="text-blue-600 hover:text-blue-800 transition-colors duration-300 font-medium"
+            >
+              ليس لديك حساب؟ سجل الآن
+            </Link>
           </div>
 
           {/* submit */}
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full flex items-center justify-center py-3 px-5 rounded-lg bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-black transition ${
-              isLoading ? 'opacity-70 cursor-not-allowed' : ''
+            className={`w-full flex items-center justify-center py-3.5 px-5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:scale-95 text-white font-semibold focus:outline-none focus:ring-4 focus:ring-blue-500/30 focus:ring-offset-2 focus:ring-offset-white transition-all duration-300 shadow-lg shadow-blue-500/30 ${
+              isLoading ? 'opacity-80 cursor-not-allowed' : ''
             }`}
           >
             {isLoading ? (
@@ -190,6 +220,25 @@ export default function AuthPage() {
           </button>
         </form>
       </div>
+
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          33% { transform: translateY(-20px) rotate(120deg); }
+          66% { transform: translateY(10px) rotate(240deg); }
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+        .animation-delay-500 { animation-delay: 0.5s; }
+        .animation-delay-1000 { animation-delay: 1s; }
+        .animation-delay-1500 { animation-delay: 1.5s; }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-2500 { animation-delay: 2.5s; }
+        .animation-delay-3000 { animation-delay: 3s; }
+        .animation-delay-1800 { animation-delay: 1.8s; }
+        .animation-delay-1200 { animation-delay: 1.2s; }
+      `}</style>
     </div>
   )
 }

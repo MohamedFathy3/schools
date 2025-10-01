@@ -7,6 +7,7 @@ import {
   MessageCircle,
   User as UserIcon,
 } from 'lucide-react'
+import { FiArrowDownCircle } from 'react-icons/fi'
 
 import { useState } from 'react'
 
@@ -26,6 +27,7 @@ export default function Sidebar({
      { name: 'Dashboard', icon: Home, href: '/teacher' },
     { name: 'Course', icon: UserIcon, href: '/teacher/courses' },
     { name: 'Create Course', icon: UserIcon, href: '/teacher/create_course' },
+    { name: 'Withdraw money', icon: FiArrowDownCircle, href: '/teacher/money' },
   // { name: 'Chat', icon: MessageCircle, href: '/teacher/chat' },
   ]
 

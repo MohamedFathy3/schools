@@ -1,9 +1,7 @@
-// lib/adminApi.ts
 import Cookies from 'js-cookie'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api'
+const GATEWAY_URL = '/api'
 
-// أنواع البيانات
 export interface Teacher {
   id: number
   name: string
@@ -22,44 +20,55 @@ export interface LoginResponse {
   status: number
 }
 
+async function apiRequest(endpoint: string, options: RequestInit = {}) {
+  const url = `${GATEWAY_URL}/${endpoint}`
+  
+  console.log(`🚀 [API] ${options.method || 'GET'} ${endpoint}`)
+  
+  const response = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      ...options.headers,
+    },
+    ...options,
+  })
+
+  console.log(`📨 [API] Response: ${response.status}`)
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`HTTP ${response.status}: ${errorText}`)
+  }
+
+  return response.json()
+}
+
 export const teacherApi = {
   // ✅ تسجيل الدخول
-  async login(email: string, password: string): Promise<{ teacher: Teacher }> {
+  async login(email: string, password: string): Promise<{ teacher: Teacher; token: string }> {
     try {
-      const res = await fetch(`${API_URL}/teachers/login`, {
+      console.log('🔐 Attempting login...')
+
+      const data: LoginResponse = await apiRequest('teachers/login', {
         method: 'POST',
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ email, password }),
       })
 
-      if (!res.ok) {
-        let errorMessage = 'Login failed'
-        try {
-          const errorData = await res.json()
-          errorMessage = errorData.message || errorMessage
-        } catch {
-          errorMessage = `Login failed with status: ${res.status}`
-        }
-        console.error('❌ Login failed:', errorMessage)
-        throw new Error(errorMessage)
-      }
+      console.log('✅ Login successful')
 
-      const data: LoginResponse = await res.json()
+      // تخزين البيانات
+      Cookies.set('teacher_token', data.message.token, { 
+        expires: 7,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+      })
 
-      // ✅ طباعة الـ token في console
-      console.log('✅ Token received:', data.message.token)
-
-      // ✅ تخزين الـ token في الكوكيز
-      Cookies.set('teacher_token', data.message.token, { expires: 7 })
-      console.log('✅ Token saved in cookie!')
-
-      // ✅ طباعة بيانات المدرس
-      console.log('👨‍🏫 Teacher Info:', data.message.teacher)
+      localStorage.setItem('teacher_user', JSON.stringify(data.message.teacher))
 
       return {
         teacher: data.message.teacher,
+        token: data.message.token
       }
     } catch (error) {
       console.error('🔥 Login error:', error)
@@ -68,91 +77,106 @@ export const teacherApi = {
   },
 
   // ✅ التحقق من الجلسة
-async checkAuth(): Promise<Teacher | null> {
-  const token = Cookies.get('teacher_token')
-  console.log('🔍 Checking auth with token:', token)
+  async checkAuth(): Promise<Teacher | null> {
+    try {
+      const savedUser = localStorage.getItem('teacher_user')
+      const token = Cookies.get('teacher_token')
 
-  if (!token) {
-    console.warn('⚠️ No token found in cookies.')
-    return null
-  }
+      if (!token || !savedUser) {
+        return null
+      }
 
-  try {
-    const res = await fetch(`${API_URL}/teachers/check-auth`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+      // جرب endpoints مختلفة
+      const endpoints = [
+        'teachers/profile',
+        'teachers/me', 
+        'user/profile'
+      ]
 
-    if (!res.ok) {
-      console.warn('❌ Auth check failed with status:', res.status)
+      for (const endpoint of endpoints) {
+        try {
+          await apiRequest(endpoint, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+          return JSON.parse(savedUser)
+        } catch {
+          continue
+        }
+      }
+
+      return JSON.parse(savedUser)
+    } catch (error) {
+      console.error('Auth check error:', error)
       return null
     }
-
-    const data = await res.json()
-    console.log('✅ Auth check success:', data)
-
-    // ✅ عدل هنا 👇
-    return data.message?.teacher || null
-  } catch (err) {
-    console.error('❌ Error checking auth:', err)
-    return null
-  }
-}
-,
-
-  // ✅ تسجيل الخروج
-  logout() {
-    Cookies.remove('teacher_token')
-    console.log('🚪 Logged out and token removed from cookies.')
   },
 
   // ✅ جلب البروفايل
   async getProfile(): Promise<Teacher | null> {
     const token = Cookies.get('teacher_token')
-    console.log('👤 Getting profile with token:', token)
-
     if (!token) return null
 
     try {
-      const res = await fetch(`${API_URL}/teachers/profile`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) return null
-
-      const data = await res.json()
-      console.log('📄 Profile data:', data)
-
-      return data
-    } catch (err) {
-      console.error('❌ Error getting profile:', err)
-      return null
-    }
-  },
-
-  // ✅ تحديث البروفايل
-  async updateProfile(data: Partial<Teacher>): Promise<Teacher | null> {
-    const token = Cookies.get('teacher_token')
-    console.log('🛠️ Updating profile with token:', token)
-
-    if (!token) return null
-
-    try {
-      const res = await fetch(`${API_URL}/teachers/update-profile`, {
-        method: 'POST',
+      const data = await apiRequest('teachers/profile', {
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
+          'Authorization': `Bearer ${token}`
+        }
       })
-      if (!res.ok) return null
-
-      const updated = await res.json()
-      console.log('✅ Profile updated:', updated)
-
-      return updated
-    } catch (err) {
-      console.error('❌ Error updating profile:', err)
+      
+      const teacher = data.message?.teacher || data.teacher || data
+      if (teacher) {
+        localStorage.setItem('teacher_user', JSON.stringify(teacher))
+      }
+      
+      return teacher
+    } catch (error) {
+      console.error('Get profile error:', error)
       return null
     }
   },
+
+  // ✅ تسجيل الخروج
+  async logout(): Promise<void> {
+    const token = Cookies.get('teacher_token')
+    
+    try {
+      if (token) {
+        await apiRequest('teachers/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+      }
+    } catch (error) {
+      console.warn('Logout request failed:', error)
+    } finally {
+      this.clearAuthData()
+    }
+  },
+
+  // ✅ مسح البيانات
+  clearAuthData(): void {
+    Cookies.remove('teacher_token')
+    localStorage.removeItem('teacher_user')
+  },
+
+  // ✅ الدروس
+  async getCourses(): Promise<any> {
+    const token = Cookies.get('teacher_token')
+    if (!token) return null
+
+    try {
+      return await apiRequest('teachers/courses', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+    } catch (error) {
+      console.error('Get courses error:', error)
+      return null
+    }
+  }
 }

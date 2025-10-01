@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api'
+const API_URL = '/api'; // بدل ما تستخدم https://back.professionalacademyedu.com/api مباشرة
 
 export interface stage {
   id: number

@@ -39,7 +39,7 @@ const { courseId, examId } = useParams() as { courseId: string, examId: string }
     { choice_text: '', is_correct: false },
   ])
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
+  const API_URL = '/api'; // بدل ما تستخدم https://back.professionalacademyedu.com/api مباشرة
 const router = useRouter()
 
   // جلب الأسئلة الموجودة من API

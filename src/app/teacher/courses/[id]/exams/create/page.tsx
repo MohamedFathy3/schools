@@ -16,7 +16,7 @@ export default function CreateExamPage({ params }: { params: { id: string } }) {
     description: ''
   })
   const [loading, setLoading] = useState(false)
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
+  const API_URL = '/api'; // بدل ما تستخدم https://back.professionalacademyedu.com/api مباشرة
   const router = useRouter()
 
   const handleChange = (

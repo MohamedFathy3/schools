@@ -9,6 +9,7 @@ import {
   User as UserIcon,
 } from 'lucide-react'
 import { useState } from 'react'
+import { FiArrowDownCircle } from 'react-icons/fi'
 
 export default function Sidebar({
   open,
@@ -29,6 +30,8 @@ export default function Sidebar({
     { name: 'Subject', icon: ComputerIcon, href: '/dashboard/subject' },
     { name: 'Stages', icon: UserIcon, href: '/dashboard/Stages' },
     { name: 'Course', icon: UserIcon, href: '/dashboard/course' },
+    { name: 'Withdraw money', icon: FiArrowDownCircle, href: '/dashboard/money' },
+    
   
   ]
 

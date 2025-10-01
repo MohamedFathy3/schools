@@ -2,7 +2,7 @@
 
 import Cookies from 'js-cookie'
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api'
+const API_URL = '/api'; // بدل ما تستخدم https://back.professionalacademyedu.com/api مباشرة
 
 // أنواع البيانات
 export interface Admin {
@@ -31,7 +31,7 @@ async function fetchApi<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const url = `${BASE_URL}${endpoint}`
+  const url = `${API_URL}${endpoint}`
   const token = Cookies.get('admin_token')
 
   const defaultHeaders: HeadersInit = {
@@ -117,7 +117,7 @@ export const teachersApi = {
 // دالة مساعدة للتحقق من اتصال الخادم
 export const checkServerConnection = async (): Promise<boolean> => {
   try {
-    const response = await fetch(`${BASE_URL}/admin/login`, {
+    const response = await fetch(`${API_URL}/admin/login`, {
       method: 'OPTIONS',
     })
     return response.status !== 0 && !response.type.includes('error')
