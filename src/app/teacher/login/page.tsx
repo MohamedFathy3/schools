@@ -173,7 +173,7 @@ export default function AuthPage() {
             </label>
 
             <Link 
-              href="/auth/signup" 
+              href="https://professionalacademyedu.com/register" 
               className="text-blue-600 hover:text-blue-800 transition-colors duration-300 font-medium"
             >
               ليس لديك حساب؟ سجل الآن
