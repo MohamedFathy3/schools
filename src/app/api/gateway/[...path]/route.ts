@@ -4,37 +4,42 @@ const BACKEND_URL = 'https://back.professionalacademyedu.com'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  context: { params: Promise<{ path: string[] }> }
 ) {
-  return handleRequest(request, params.path, 'GET')
+  const { path } = await context.params
+  return handleRequest(request, path, "GET")
 }
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  context: { params: Promise<{ path: string[] }> }
 ) {
-  return handleRequest(request, params.path, 'POST')
+  const { path } = await context.params
+  return handleRequest(request, path, "POST")
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  context: { params: Promise<{ path: string[] }> }
 ) {
-  return handleRequest(request, params.path, 'PUT')
+  const { path } = await context.params
+  return handleRequest(request, path, "PUT")
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  context: { params: Promise<{ path: string[] }> }
 ) {
-  return handleRequest(request, params.path, 'DELETE')
+  const { path } = await context.params
+  return handleRequest(request, path, "DELETE")
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  context: { params: Promise<{ path: string[] }> }
 ) {
-  return handleRequest(request, params.path, 'PATCH')
+  const { path } = await context.params
+  return handleRequest(request, path, "PATCH")
 }
 
 async function handleRequest(
@@ -65,9 +70,14 @@ async function handleRequest(
       headers.set('Content-Type', 'application/json')
     }
 
-    let body: any = null
+    let body: string | null = null
+
     if (method !== 'GET' && method !== 'HEAD') {
-      body = await request.text()
+      if (request.headers.get("content-type")?.includes("application/json")) {
+        body = await request.text() 
+      } else {
+        body = await request.text()
+      }
     }
 
     const response = await fetch(url, {

@@ -25,6 +25,7 @@ const TeacherAuthContext = createContext<TeacherAuthContextType>({
 export function TeacherAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<Teacher | null>(null)
   const [loading, setLoading] = useState(true)
+  const [initialCheckDone, setInitialCheckDone] = useState(false) // 🔥 إضافة هذه السطر
   const router = useRouter()
   const pathname = usePathname()
 
@@ -39,6 +40,7 @@ export function TeacherAuthProvider({ children }: { children: React.ReactNode })
       setUser(null)
     } finally {
       setLoading(false)
+      setInitialCheckDone(true) // 🔥 تحديث أن التحقق الأولي انتهى
     }
   }
 
@@ -47,12 +49,23 @@ export function TeacherAuthProvider({ children }: { children: React.ReactNode })
     loadUser()
   }, [])
 
-  // ✅ حماية المسارات
+  // ✅ حماية المسارات - فقط بعد انتهاء التحقق الأولي
   useEffect(() => {
-    if (!loading && pathname?.startsWith('/teacher') && !user && pathname !== '/teacher/login') {
+    if (!initialCheckDone || loading) return // 🔥 انتظر حتى ينتهي التحقق الأولي
+
+    const isTeacherRoute = pathname?.startsWith('/teacher')
+    const isLoginPage = pathname === '/teacher/login'
+    
+    if (isTeacherRoute && !isLoginPage && !user) {
+      console.log('🔄 Redirecting to login - no user')
       router.push('/teacher/login')
     }
-  }, [pathname, loading, user, router])
+    
+    if (isLoginPage && user) {
+      console.log('🔄 Redirecting to dashboard - user exists')
+      router.push('/teacher')
+    }
+  }, [pathname, loading, user, initialCheckDone, router]) // 🔥 إضافة initialCheckDone
 
   // ✅ تسجيل الدخول
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -79,7 +92,6 @@ export function TeacherAuthProvider({ children }: { children: React.ReactNode })
   // ✅ تحديث بيانات المستخدم
   const updateUser = (newUser: Teacher) => {
     setUser(newUser)
-    localStorage.setItem('teacher_user', JSON.stringify(newUser))
   }
 
   // ✅ إعادة تحميل بيانات المستخدم

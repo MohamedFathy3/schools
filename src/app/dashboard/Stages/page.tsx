@@ -22,6 +22,7 @@ export interface Stage {
 
 interface Field {
   key: string
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any
   type: 'text' | 'file'
   enabled: boolean
@@ -202,6 +203,7 @@ export default function StagesManagementPage() {
   }
 
   const getApiFilters = () => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const apiFilters: any = {}
     if (filters.country) apiFilters.country_id = filters.country
     if (filters.active !== '') apiFilters.active = filters.active
@@ -235,6 +237,7 @@ export default function StagesManagementPage() {
         return true
       }
       if(data && data.errors) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Object.values(data.errors).forEach((arr:any)=>{
           (arr as string[]).forEach(msg=> toast.error(msg))
         })
@@ -258,6 +261,7 @@ export default function StagesManagementPage() {
         return true
       }
       if(data && data.errors) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Object.values(data.errors).forEach((arr:any)=>{
           (arr as string[]).forEach(msg=> toast.error(msg))
         })
@@ -389,7 +393,7 @@ const toggleStageActive = async (id: number, active: boolean) => {
   const closeModal = () => {
     setIsModalOpen(false)
   }
-
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleFieldChange = (key:string, value:any) => {
     setFormFields(prev=>prev.map(f=>f.key===key?{...f,value}:f))
   }
@@ -438,7 +442,9 @@ const toggleStageActive = async (id: number, active: boolean) => {
 
   // --- Filter & Sort ---
   const sortedStages = [...stages].sort((a,b)=>{
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const aVal = (a[sortField] as any) ?? ''
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const bVal = (b[sortField] as any) ?? ''
     const aStr = typeof aVal==='string'?aVal.toLowerCase():aVal
     const bStr = typeof bVal==='string'?bVal.toLowerCase():bVal

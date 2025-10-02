@@ -1,15 +1,15 @@
 "use client";
-import { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import Layout from '@/components/Layout';
 
 export default function MessageForm() {
-  const [message, setMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
+  const [message, setMessage] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showToast, setShowToast] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string>('');
   const API_URL = '/api'; 
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!message) return;
@@ -39,7 +39,6 @@ export default function MessageForm() {
       const data = await response.json();
       console.log('📊 بيانات الاستجابة:', data);
 
-      // التصحيح هنا: استخدام 'Success' بدلاً من 'Success'
       if (response.ok && data.result === "Success") {
         setToastMessage(data.message || 'تم إرسال الرسالة بنجاح!');
         setShowToast(true);
@@ -84,9 +83,8 @@ export default function MessageForm() {
               </label>
               <textarea
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMessage(e.target.value)}
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-white placeholder-gray-400 transition-all duration-200 resize-none hover:border-gray-500"
-                rows="6"
                 placeholder="اكتب رسالتك للموظفين هنا..."
                 required
                 minLength={5}

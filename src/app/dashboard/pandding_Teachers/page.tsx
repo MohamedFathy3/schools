@@ -152,7 +152,7 @@ export default function TeachersPage() {
       toast.error('حدث خطأ أثناء تعديل الحالة')
     }
   }
-
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleFilterChange = (key: keyof typeof filters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }))
   }
@@ -197,7 +197,6 @@ export default function TeachersPage() {
           theme="dark"
           toastClassName="rounded-xl animate-fadeInUp"
           progressClassName="bg-gradient-to-r from-blue-500 to-purple-500"
-          bodyClassName="font-sans"
           closeButton={false}
         />
         
@@ -320,6 +319,7 @@ export default function TeachersPage() {
                 </label>
                 <select
                   value={filters.orderBy}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   onChange={(e) => handleFilterChange('orderBy', e.target.value as any)}
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 shadow-sm"
                 >
@@ -336,6 +336,7 @@ export default function TeachersPage() {
                 </label>
                 <select
                   value={filters.orderByDirection}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   onChange={(e) => handleFilterChange('orderByDirection', e.target.value as any)}
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 shadow-sm"
                 >

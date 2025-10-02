@@ -9,6 +9,7 @@ import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import Layout from '@/components/Layout'
 import { courseApi, Course, CoursesResponse } from '@/lib/courseApi'
+import MyPagination from "@/components/Pagination";
 
 // Modal Component لعرض التفاصيل
 const CourseDetailsModal = ({ 
@@ -260,75 +261,6 @@ const ToggleSwitch = ({
   )
 }
 
-// Pagination Component
-const Pagination = ({ 
-  currentPage, 
-  totalPages, 
-  onPageChange 
-}: { 
-  currentPage: number
-  totalPages: number
-  onPageChange: (page: number) => void
-}) => {
-  const pages = []
-  const maxVisiblePages = 5
-
-  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
-  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
-
-  if (endPage - startPage + 1 < maxVisiblePages) {
-    startPage = Math.max(1, endPage - maxVisiblePages + 1)
-  }
-
-  for (let i = startPage; i <= endPage; i++) {
-    pages.push(i)
-  }
-
-  return (
-    <div className="flex justify-center items-center space-x-2 space-x-reverse mt-8 animate-fadeIn">
-      {/* زر السابق */}
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className={`p-3 rounded-xl transition-all duration-300 ${
-          currentPage === 1 
-            ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
-            : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:scale-105 shadow-lg'
-        }`}
-      >
-        <FiChevronRight size={20} />
-      </button>
-
-      {/* أرقام الصفحات */}
-      {pages.map(page => (
-        <button
-          key={page}
-          onClick={() => onPageChange(page)}
-          className={`px-4 py-3 rounded-xl font-bold transition-all duration-300 ${
-            page === currentPage
-              ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-500/30 scale-110'
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white hover:scale-105'
-          }`}
-        >
-          {page}
-        </button>
-      ))}
-
-      {/* زر التالي */}
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className={`p-3 rounded-xl transition-all duration-300 ${
-          currentPage === totalPages
-            ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-            : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:scale-105 shadow-lg'
-        }`}
-      >
-        <FiChevronLeft size={20} />
-      </button>
-    </div>
-  )
-}
 
 export default function CoursesPage() {
   const [coursesData, setCoursesData] = useState<CoursesResponse>({
@@ -548,7 +480,7 @@ export default function CoursesPage() {
 
         {/* Pagination */}
         {coursesData.last_page > 1 && (
-          <Pination 
+          <MyPagination
             currentPage={coursesData.current_page}
             totalPages={coursesData.last_page}
             onPageChange={handlePageChange}

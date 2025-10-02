@@ -322,7 +322,7 @@ const { user } = useTeacherAuth()
   })
 
   const API_URL = '/api'; 
-
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const fetchData = async (endpoint: string, body: any = {}) => {
   try {
     const res = await fetch(`${API_URL}/${endpoint}`, {
@@ -390,7 +390,7 @@ useEffect(() => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          filters: { "teacher_id": user.id},
+          filters: { "teacher_id": user?.id || '' },
           orderBy: "id",
           orderByDirection: "asc",
           perPage: 100,

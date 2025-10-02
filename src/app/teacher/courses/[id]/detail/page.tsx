@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react'
 import { FiEdit, FiSave, FiX, FiTrash2, FiPlus, FiVideo, FiFileText, FiArrowLeft, FiEye, FiDownload, FiCalendar, FiClock, FiPlay, FiExternalLink, FiYoutube, FiFilm, FiLink } from 'react-icons/fi'
 import { ToastContainer, toast } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
 import Link from 'next/link'
 import Layout from '@/components/Layoutteacher'
 import { useParams } from 'next/navigation'
@@ -18,6 +17,7 @@ interface CourseDetail {
   created_at: string
   session_date?: string
   session_time?: string
+  file_path?: string
 }
 
 interface Course {
@@ -255,7 +255,7 @@ const handleZoomLink = (url: string, title: string) => {
   if (url.includes('zoom.us')) {
     window.open(url, '_blank', 'noopener,noreferrer');
     toast.info('جاري فتح رابط Zoom في نافذة جديدة', {
-      icon: '🔗'
+      icon: <span>🔗</span>
     });
   } else {
     // إذا الرابط مش Zoom نفتحه في تاب جديد
@@ -314,6 +314,7 @@ const renderContent = (detail: CourseDetail) => {
     const fileExtension = getFileExtension(fileUrl);
     
     const getFileIcon = (ext: string) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const icons: any = {
         pdf: '📕',
         doc: '📘',
@@ -416,7 +417,7 @@ export default function CourseDetailsPage() {
       if (data.status === 200) {
         setCourseDetails(data.data || [])
         toast.success(`تم تحميل ${data.data?.length || 0} تفصيل بنجاح`, {
-          icon: '📚'
+    icon: <span>📚</span>
         })
       } else {
         toast.error('حدث خطأ في تحميل التفاصيل')
@@ -470,6 +471,7 @@ export default function CourseDetailsPage() {
       } else {
         // عرض أخطاء التحقق
         if (data.errors) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
           Object.values(data.errors).forEach((error: any) => {
             toast.error(error[0])
           })
@@ -531,6 +533,7 @@ export default function CourseDetailsPage() {
       } else {
         // عرض أخطاء التحقق
         if (data.errors) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
           Object.values(data.errors).forEach((error: any) => {
             toast.error(error[0])
           })

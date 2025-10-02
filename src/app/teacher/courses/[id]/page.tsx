@@ -257,7 +257,7 @@ export default function CourseDetailsPage({ params }: { params: { id: string } }
       if (data.status === 200) {
         setCourse(data.data)
         toast.success('تم تحميل تفاصيل الكورس بنجاح', {
-          icon: '🎓'
+          icon: <span>🎓</span>
         })
       } else {
         toast.error('حدث خطأ في تحميل تفاصيل الكورس')

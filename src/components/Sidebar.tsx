@@ -33,8 +33,8 @@ export default function Sidebar({
     { name: 'Course', icon: UserIcon, href: '/dashboard/course' },
     { name: 'chat', icon: MessageCircle, href: '/dashboard/sendchat' },
     { name: 'Withdraw money', icon: FiArrowDownCircle, href: '/dashboard/money' },
-    
-  
+    { name: 'Profile', icon: UserIcon, href: '/dashboard/profile' },
+
   ]
 
   return (

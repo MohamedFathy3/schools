@@ -3,9 +3,8 @@ import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { FiArrowLeft, FiDollarSign, FiFileText, FiSend, FiCheckCircle, FiUsers, FiBook, FiClock, FiAlertCircle, FiRefreshCw } from 'react-icons/fi'
 import { ToastContainer, toast } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
 import Cookies from 'js-cookie'
-
+import Teacher from '@/types/Teacher'
 import Layoutteacher from '@/components/Layoutteacher'
 import { useTeacherAuth } from '@/contexts/teacherAuthContext'
 
@@ -20,6 +19,8 @@ interface TeacherBalance {
   total: number
   courses_count: number
   students_count: number
+  total_income?: number
+  
 }
 
 interface WithdrawItem {
@@ -50,13 +51,14 @@ export default function WithdrawPage() {
   const API_URL = '/api'
 
   // استخدام بيانات المستخدم من الـ context بشكل آمن
-  const balance: TeacherBalance = {
-    available: (user as any)?.total_income || 0,
-    pending: 0,
-    total: (user as any)?.total_income || 0,
-    courses_count: (user as any)?.courses_count || 0,
-    students_count: (user as any)?.students_count || 0
-  }
+ const balance: TeacherBalance = {
+  available: (user as Teacher)?.total_income || 0,
+  pending: 0,
+  total: (user as Teacher)?.total_income || 0,
+  courses_count: (user as Teacher)?.courses_count || 0,
+  students_count: (user as Teacher)?.students_count || 0,
+  total_income: (user as Teacher)?.total_income || 0  // أضف هذا
+}
 
   // جلب التوكن
   const getToken = () => {
@@ -396,7 +398,7 @@ export default function WithdrawPage() {
 
                 <button
                   type="submit"
-                  disabled={isSubmitting || balance.total_income < 30}
+                  disabled={isSubmitting || balance.available < 30}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition duration-200"
                 >
                   {isSubmitting ? (
@@ -467,31 +469,32 @@ export default function WithdrawPage() {
             </div>
           </div>
 
-          {/* معلومات الحساب البنكي */}
-          {(user as any)?.account_holder_name && (
+          
+    
+          {(user as Teacher)?.account_holder_name && (
             <div className="bg-gray-800 rounded-2xl p-4 md:p-6 mt-6 md:mt-8">
               <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">معلومات الحساب البنكي المسجل</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-gray-400">اسم صاحب الحساب:</p>
-                  <p className="text-white font-medium">{(user as any)?.account_holder_name}</p>
+                  <p className="text-white font-medium">{(user as Teacher)?.account_holder_name}</p>
                 </div>
-                {(user as any)?.account_number && (
+                {(user as Teacher)?.account_number && (
                   <div>
                     <p className="text-gray-400">رقم الحساب:</p>
-                    <p className="text-white font-medium">{(user as any)?.account_number}</p>
+                    <p className="text-white font-medium">{(user as Teacher)?.account_number}</p>
                   </div>
                 )}
-                {(user as any)?.iban && (
+                {(user as Teacher)?.iban && (
                   <div>
                     <p className="text-gray-400">IBAN:</p>
-                    <p className="text-white font-medium">{(user as any)?.iban}</p>
+                    <p className="text-white font-medium">{(user as Teacher)?.iban}</p>
                   </div>
                 )}
-                {(user as any)?.wallets_number && (
+                {(user as Teacher)?.wallets_number && (
                   <div>
                     <p className="text-gray-400">رقم المحفظة:</p>
-                    <p className="text-white font-medium">{(user as any)?.wallets_number}</p>
+                    <p className="text-white font-medium">{(user as Teacher)?.wallets_number}</p>
                   </div>
                 )}
               </div>
@@ -515,7 +518,7 @@ export default function WithdrawPage() {
               <div className="space-y-2 md:space-y-3">
                 <div className="flex items-start">
                   <FiCheckCircle className="text-green-500 mt-0.5 ml-2 flex-shrink-0" />
-                  <span>عمولة النظام: {(user as any)?.commission || '20.00%'}</span>
+                  <span>عمولة النظام: {(user as Teacher)?.commission || '20.00%'}</span>
                 </div>
                 <div className="flex items-start">
                   <FiCheckCircle className="text-green-500 mt-0.5 ml-2 flex-shrink-0" />

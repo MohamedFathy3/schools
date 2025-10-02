@@ -16,7 +16,7 @@ export interface Course {
   teacher_share: number;
 }
 
-export interface Teacher {
+export default interface Teacher {
   id: number;
   name: string;
   email: string;

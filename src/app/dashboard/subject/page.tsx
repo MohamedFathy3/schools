@@ -194,6 +194,7 @@ export default function SubjectsPage() {
         return true
       } else {
         if (data.errors) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
           Object.values(data.errors).forEach((arr: any) => 
             arr.forEach((e: string) => toast.error(e))
           )
@@ -411,7 +412,9 @@ const toggleSubjectActive = async (id: number, newStatus: boolean): Promise<void
     : filteredSubjects
   
   const sortedSubjects = [...nameFilteredSubjects].sort((a,b)=>{
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const aVal = (a[sortField] as any) ?? ''
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const bVal = (b[sortField] as any) ?? ''
     const aStr = typeof aVal==='string'?aVal.toLowerCase():aVal
     const bStr = typeof bVal==='string'?bVal.toLowerCase():bVal

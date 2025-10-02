@@ -1,4 +1,5 @@
-import '../styles/globals.css'
+import "@/styles/globals.css";
+import React from 'react'
 import { ThemeProvider } from '@/components/ThemeProviderClient'
 import Layout from '@/components/Layout'
 export default function RootLayout({ children }: { children: React.ReactNode }) {
