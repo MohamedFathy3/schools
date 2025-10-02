@@ -35,7 +35,7 @@ export default function TeachersPage() {
     phone: '',
     active: undefined as boolean | undefined,
     orderBy: 'id' as 'id' | 'name' | 'email',
-    orderByDirection: 'asc' as 'asc' | 'desc'
+    orderByDirection: 'desc' as 'asc' | 'desc'
   })
 
   const router = useRouter()

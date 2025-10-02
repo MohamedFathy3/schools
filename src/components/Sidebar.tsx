@@ -27,7 +27,7 @@ export default function Sidebar({
   const navItems = [
     { name: 'Dashboard', icon: Home, href: '/dashboard' },
     { name: 'Country', icon: Database, href: '/dashboard/Country' },
-    { name: 'Pending Teachers', icon: ComputerIcon, href: '/dashboard/pandding_Teachers' },
+    { name: 'Teachers', icon: ComputerIcon, href: '/dashboard/pandding_Teachers' },
     { name: 'Subject', icon: ComputerIcon, href: '/dashboard/subject' },
     { name: 'Stages', icon: UserIcon, href: '/dashboard/Stages' },
     { name: 'Course', icon: UserIcon, href: '/dashboard/course' },
