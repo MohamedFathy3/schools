@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import Layout from '@/components/Layout';
+import Layout from '@/components/Layoutteacher';
 import { FiSearch, FiMessageSquare, FiCalendar, FiClock, FiChevronDown, FiChevronUp, FiTrash2, FiRefreshCw } from 'react-icons/fi';
 
 // تعريف الأنواع
