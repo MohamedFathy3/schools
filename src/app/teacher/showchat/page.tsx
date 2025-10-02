@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Layout from '@/components/Layoutteacher';
 import { FiSearch, FiMessageSquare, FiCalendar, FiClock, FiChevronDown, FiChevronUp, FiTrash2, FiRefreshCw } from 'react-icons/fi';
+import Cookies from 'js-cookie'
 
 // تعريف الأنواع
 type Message = {
@@ -24,10 +25,31 @@ export default function MessagesPage() {
   const [expandedMessage, setExpandedMessage] = useState<number | null>(null);
   const API_URL = '/api';
 
+
+
+  const redmassafe = async (id: number) => {
+  try {
+    
+    const response = await fetch(`${API_URL}/admin/messages/${id}/read`, {
+  
+    });
+    const data: ApiResponse = await response.json();
+
+    if (response.ok && data.result === "Success") {
+      
+    } else {
+      console.error('Failed to fetch messages');
+    }
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
   // جلب الرسائل من الـ API
   const fetchMessages = async () => {
     try {
-      setIsLoading(true);
       const response = await fetch(`${API_URL}/admin/messages`);
       const data: ApiResponse = await response.json();
 
@@ -81,17 +103,7 @@ export default function MessagesPage() {
     });
   };
 
-  // حذف رسالة
-  const deleteMessage = async (messageId: number) => {
-    if (!confirm('هل أنت متأكد من حذف هذه الرسالة؟')) return;
-    
-    try {
-      // هنا يمكنك إضافة API call للحذف
-      setMessages(prev => prev.filter(msg => msg.id !== messageId));
-    } catch (error) {
-      console.error('Error deleting message:', error);
-    }
-  };
+ 
 
   return (
     <Layout>
@@ -217,8 +229,11 @@ export default function MessagesPage() {
                 >
                   <div 
                     className="p-6 cursor-pointer"
-                    onClick={() => setExpandedMessage(expandedMessage === message.id ? null : message.id)}
-                  >
+                   onClick={() => {
+    setExpandedMessage(expandedMessage === message.id ? null : message.id);
+    redmassafe(message.id);
+  }}
+>
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <p className="text-white text-lg font-medium mb-2 line-clamp-2">

@@ -48,38 +48,14 @@ export default function Navbar({ toggleSidebar }: { toggleSidebar: () => void })
           ☰
         </button>
 
-        {/* Search */}
-        <div className="relative w-full max-w-md mx-4">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="بحث..."
-            className="w-full pl-10 pr-4 py-2 text-sm border rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+       
 
         {/* Right section */}
         <div className="flex items-center gap-4">
           {/* Notifications */}
-          <div className="relative" ref={notificationsRef}>
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-0 right-0 h-4 w-4 text-[10px] text-white bg-red-500 rounded-full flex items-center justify-center">
-                3
-              </span>
-            </button>
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg z-50 p-4">
-                <p className="text-sm text-gray-700 dark:text-gray-200">📩 لديك 3 إشعارات جديدة</p>
-              </div>
-            )}
-          </div>
+           
+          
 
-          {/* Theme Toggle */}
-          <ThemeToggle />
 
           {/* Profile */}
           <div className="relative" ref={profileRef}>

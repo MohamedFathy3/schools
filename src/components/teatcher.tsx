@@ -9,7 +9,9 @@ import {
 } from 'lucide-react'
 import { FiArrowDownCircle } from 'react-icons/fi'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+const API_URL = '/api/admin/messages'
 
 export default function Sidebar({
   open,
@@ -20,16 +22,37 @@ export default function Sidebar({
   collapsed: boolean
   onClose: () => void
 }) {
-  const [openDropdown, setOpenDropdown] = useState(false)
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
   const pathname = usePathname()
 
   const navItems = [
-     { name: 'Dashboard', icon: Home, href: '/teacher' },
+    { name: 'Dashboard', icon: Home, href: '/teacher' },
     { name: 'Course', icon: UserIcon, href: '/teacher/courses' },
     { name: 'Create Course', icon: UserIcon, href: '/teacher/create_course' },
     { name: 'Withdraw money', icon: FiArrowDownCircle, href: '/teacher/money' },
-  { name: 'Chat', icon: MessageCircle, href: '/teacher/showchat' },
+    { name: 'Chat', icon: MessageCircle, href: '/teacher/showchat' },
   ]
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const response = await fetch(API_URL)
+        const data = await response.json()
+
+        if (data.result === 'Success') {
+          // حساب عدد الرسائل غير المقروءة (is_read = 0)
+          const unreadMessages = data.messages.filter(
+            (message: { is_read: number }) => message.is_read === 0
+          )
+          setUnreadMessagesCount(unreadMessages.length)
+        }
+      } catch (error) {
+        console.error('Error fetching messages:', error)
+      }
+    }
+
+    fetchMessages()
+  }, [])
 
   return (
     <>
@@ -64,6 +87,8 @@ export default function Sidebar({
         <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
           {navItems.map((item) => {
             const isActive = pathname === item.href
+            // عرض النقطة الحمراء فقط إذا كان هناك رسائل غير مقروءة (unreadMessagesCount > 0)
+            const showAlert = item.name === 'Chat' && unreadMessagesCount > 0
 
             return (
               <Link
@@ -80,6 +105,17 @@ export default function Sidebar({
                 <item.icon className="h-5 w-5 shrink-0" />
                 {!collapsed && (
                   <span className="text-sm font-medium">{item.name}</span>
+                )}
+                {/* عرض النقطة الحمراء الوميضية فقط إذا كان هناك رسائل غير مقروءة */}
+                {showAlert && (
+                  <div className="relative">
+                    <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    {!collapsed && unreadMessagesCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        {unreadMessagesCount}
+                      </span>
+                    )}
+                  </div>
                 )}
               </Link>
             )
