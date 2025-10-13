@@ -10,7 +10,6 @@ export interface Teacher {
   image?: string
   phone?: string
   national_id?: string
-  
   // العلاقات
   country?: {
     id: number

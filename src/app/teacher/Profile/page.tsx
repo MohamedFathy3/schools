@@ -71,6 +71,7 @@ export default function TeacherProfilePage() {
     account_holder_name: '',
     account_number: '',
     iban: '',
+    
     swift_code: '',
     branch_name: '',
     wallets_name: '',

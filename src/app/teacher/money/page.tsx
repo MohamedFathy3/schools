@@ -24,6 +24,7 @@ interface TeacherData {
   account_number?: string
   iban?: string
   wallets_number?: string
+  rewards?: string
 }
 
 interface TeacherBalance {

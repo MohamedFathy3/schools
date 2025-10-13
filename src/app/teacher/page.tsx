@@ -110,7 +110,7 @@ export default function DashboardPage() {
         }
 
         const response = await fetch(`${API_URL}/teachers/check-auth`, {
-          method: 'POST',
+          method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
