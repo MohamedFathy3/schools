@@ -75,6 +75,7 @@ type ApiResponse = {
 };
 
 // Custom Tooltip for Pie Chart
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomPieTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -92,7 +93,9 @@ const CustomPieTooltip = ({ active, payload }: any) => {
 export default function DashboardPage() {
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [loading, setLoading] = useState(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [courseData, setCourseData] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [categoryData, setCategoryData] = useState<any[]>([]);
 
   const API_URL = '/api';

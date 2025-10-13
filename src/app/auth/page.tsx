@@ -742,6 +742,7 @@ export default function TeacherRegisterPage() {
                     <p className="text-indigo-300 font-medium">المادة:</p>
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
 <p className="text-white mt-1">
+  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
   {subjects.find((s: any) => s.id == formData.subject_id)?.name || 'غير محددة'}
 </p>
                   </div>

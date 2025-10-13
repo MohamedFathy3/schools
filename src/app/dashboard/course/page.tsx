@@ -252,7 +252,7 @@ const Pagination = ({
 const pages = []
 const maxVisiblePages = 5
 
-let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
+const startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
 const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
 
 // إذا كان endPage مش بيتغير في الـ if condition، احذف الكود ده
