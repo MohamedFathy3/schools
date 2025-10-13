@@ -5,7 +5,7 @@ import { ReactNode } from 'react'
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   return (
-    <NextThemesProvider attribute="class" defaultTheme="system">
+    <NextThemesProvider attribute="class">
       {children}
     </NextThemesProvider>
   )

@@ -44,27 +44,38 @@ async function handleRequest(
 ) {
   try {
     const backendPath = path.join('/')
-    
-    // 🔥 الإصلاح: إزالة الـ api المكرر من الـ URL
     const url = `${BACKEND_URL}/${backendPath}`
     
     console.log(`🌐 [GATEWAY] ${method} /${backendPath}`)
     console.log(`🔗 [GATEWAY] Forwarding to: ${url}`)
 
+    // 🔥 الإصلاح: نسخ جميع الـ headers من الطلب الأصلي
     const headers = new Headers()
-    const contentType = request.headers.get('content-type')
     
-    const authHeader = request.headers.get('authorization')
-    if (authHeader) {
-      headers.set('Authorization', authHeader)
-    }
-    
+    // نسخ جميع headers من الطلب الأصلي
+    request.headers.forEach((value, key) => {
+      // استثناء بعض headers التي تسبب مشاكل
+      if (!['host', 'content-length'].includes(key.toLowerCase())) {
+        headers.set(key, value)
+      }
+    })
+
+    // 🔥 الإصلاح الهام: إضافة headers للتعامل مع CORS و CSRF
     headers.set('Accept', 'application/json')
+    headers.set('X-Requested-With', 'XMLHttpRequest')
     
-    if (contentType?.includes('application/json')) {
-      headers.set('Content-Type', 'application/json')
+    // إذا كان هناك referrer، أضفه
+    const referrer = request.headers.get('referer')
+    if (referrer) {
+      headers.set('Referer', referrer)
     }
 
+    // 🔥 الإصلاح: التعامل مع الـ cookies
+    const cookie = request.headers.get('cookie')
+    if (cookie) {
+      headers.set('Cookie', cookie)
+    }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let body: any = null
     if (method !== 'GET' && method !== 'HEAD') {
       body = await request.text()
@@ -74,17 +85,29 @@ async function handleRequest(
       method,
       headers,
       body,
+      credentials: 'include', // 🔥 مهم للغاية
     })
 
     console.log(`📡 [GATEWAY] Response: ${response.status}`)
 
+    // 🔥 نسخ جميع headers من الاستجابة
     const responseHeaders = new Headers()
-    const responseContentType = response.headers.get('content-type')
-    if (responseContentType) {
-      responseHeaders.set('Content-Type', responseContentType)
+    response.headers.forEach((value, key) => {
+      // استثناء headers التي تسبب مشاكل
+      if (!['content-encoding', 'content-length', 'transfer-encoding'].includes(key.toLowerCase())) {
+        responseHeaders.set(key, value)
+      }
+    })
+
+    // 🔥 الإصلاح: التعامل مع set-cookie header
+    const setCookie = response.headers.get('set-cookie')
+    if (setCookie) {
+      responseHeaders.set('set-cookie', setCookie)
     }
 
     let responseData
+    const responseContentType = response.headers.get('content-type')
+    
     if (responseContentType?.includes('application/json')) {
       responseData = await response.json()
     } else {
@@ -99,7 +122,7 @@ async function handleRequest(
   } catch (error) {
     console.error('🔥 [GATEWAY] Error:', error)
     return NextResponse.json(
-      { error: 'Gateway error' },
+      { error: 'Gateway error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }

@@ -1,5 +1,4 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-
 'use client'
 import dynamic from 'next/dynamic'
 import React, { useState, useEffect, useRef } from 'react'
@@ -728,20 +727,23 @@ export default function TeacherRegisterPage() {
                   <div className="bg-gray-700 p-4 rounded-lg">
                     <p className="text-indigo-300 font-medium">البلد:</p>
                     <p className="text-white mt-1">
+                       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       {countries.find((c: any) => c.id == formData.country_id)?.name || 'غير محدد'}
                     </p>
                   </div>
                   <div className="bg-gray-700 p-4 rounded-lg">
                     <p className="text-indigo-300 font-medium">المرحلة:</p>
                     <p className="text-white mt-1">
+                       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       {stages.find((s: any) => s.id == formData.stage_id)?.name || 'غير محددة'}
                     </p>
                   </div>
                   <div className="bg-gray-700 p-4 rounded-lg md:col-span-2">
                     <p className="text-indigo-300 font-medium">المادة:</p>
-                    <p className="text-white mt-1">
-                      {subjects.find((s: any) => s.id == formData.subject_id)?.name || 'غير محددة'}
-                    </p>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+<p className="text-white mt-1">
+  {subjects.find((s: any) => s.id == formData.subject_id)?.name || 'غير محددة'}
+</p>
                   </div>
                   
                   {/* معاينات الصور */}

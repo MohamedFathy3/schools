@@ -7,9 +7,18 @@ import {
   Database,
   ComputerIcon,
   User as UserIcon,
+  Globe,
+  Users,
+  BookOpen,
+  GraduationCap,
+  DollarSign,
+  MessageCircle,
+  Library,
+  Ticket
 } from 'lucide-react'
 import { useState } from 'react'
 import { FiArrowDownCircle } from 'react-icons/fi'
+import { motion } from 'framer-motion'
 
 export default function Sidebar({
   open,
@@ -25,14 +34,15 @@ export default function Sidebar({
 
   const navItems = [
     { name: 'Dashboard', icon: Home, href: '/dashboard' },
-    { name: 'Country', icon: Database, href: '/dashboard/Country' },
-    { name: 'Pending Teachers', icon: ComputerIcon, href: '/dashboard/pandding_Teachers' },
-    { name: 'Subject', icon: ComputerIcon, href: '/dashboard/subject' },
-    { name: 'Stages', icon: UserIcon, href: '/dashboard/Stages' },
-    { name: 'Course', icon: UserIcon, href: '/dashboard/course' },
-    { name: 'Withdraw money', icon: FiArrowDownCircle, href: '/dashboard/money' },
-    
-  
+    { name: 'Country', icon: Globe, href: '/dashboard/Country' },
+    { name: 'Pending Teachers', icon: Users, href: '/dashboard/pandding_Teachers' },
+    { name: 'Subject', icon: BookOpen, href: '/dashboard/subject' },
+    { name: 'Stages', icon: GraduationCap, href: '/dashboard/Stages' },
+    { name: 'Course', icon: BookOpen, href: '/dashboard/course' },
+    { name: 'Withdraw money', icon: DollarSign, href: '/dashboard/money' },
+    { name: 'chat', icon: MessageCircle, href: '/dashboard/sendchat' },
+    { name: 'library', icon: Library, href: '/dashboard/library' },
+    { name: 'coupon', icon: Ticket, href: '/dashboard/coupon' },
   ]
 
   return (
@@ -46,19 +56,19 @@ export default function Sidebar({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-30 flex flex-col bg-white dark:bg-gray-900 border-r dark:border-gray-700 transition-all duration-300
+        className={`fixed inset-y-0 left-0 z-30 flex flex-col bg-white border-r border-blue-100 transition-all duration-300
           ${collapsed ? 'w-20' : 'w-64'}
           ${open ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0 lg:static`}
       >
         {/* Sidebar header */}
-        <div className="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700 px-4">
+        <div className="flex items-center justify-center h-16 border-b border-blue-100 px-4">
           {collapsed ? (
             <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-bold">
               E
             </div>
           ) : (
-            <h1 className="text-xl font-bold text-gray-800 dark:text-white">
+            <h1 className="text-xl font-bold text-blue-700">
               ERP System
             </h1>
           )}
@@ -74,21 +84,39 @@ export default function Sidebar({
                 key={item.name}
                 href={item.href}
                 className={`
-                  flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
+                  flex items-center gap-3 px-3 py-2 rounded-lg transition-colors relative
                   ${isActive
-                    ? 'bg-blue-100 text-blue-600 dark:bg-blue-600 dark:text-white'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
                   }
                 `}
               >
-                <item.icon className="h-5 w-5 shrink-0" />
+                {/* الأنميشن للعنصر النشط فقط */}
+                {isActive && (
+                  <motion.div
+                    className="absolute inset-0 bg-blue-50 rounded-lg border-r-4 border-blue-600"
+                    layoutId="activeTab"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+                
+                <item.icon className={`h-5 w-5 shrink-0 relative z-10 ${isActive ? 'text-blue-600' : 'text-gray-500'}`} />
                 {!collapsed && (
-                  <span className="text-sm font-medium">{item.name}</span>
+                  <span className="text-sm font-medium relative z-10">{item.name}</span>
                 )}
               </Link>
             )
           })}
         </nav>
+
+        {/* Bottom section */}
+        <div className="border-t border-blue-100 p-4">
+          {!collapsed && (
+            <div className="text-center">
+              <p className="text-xs text-blue-500">ERP System v1.0</p>
+            </div>
+          )}
+        </div>
       </aside>
     </>
   )

@@ -16,9 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <TeacherAuthProvider>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider attribute="class" defaultTheme="system">
           {children}
-        </ThemeProvider>
       </QueryClientProvider>
     </TeacherAuthProvider>
   )

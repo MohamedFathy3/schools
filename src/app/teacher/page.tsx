@@ -1,22 +1,23 @@
-"use client";
+'use client';
 
 import Layout from '@/components/Layoutteacher';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell,
-  LineChart, Line,
-  AreaChart, Area
+  PieChart, Pie, Cell
 } from 'recharts';
-import { useTeacherAuth } from '@/contexts/teacherAuthContext';
 import { useEffect, useState } from 'react';
+import Cookies from 'js-cookie';
+import { FiUsers, FiBook, FiStar, FiDollarSign, FiTrendingUp, FiUser } from 'react-icons/fi';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-type Subject = {
-  name: string;
-};
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
-type Stage = {
+type Country = {
+  id: number;
   name: string;
+  key: string;
+  code: string;
+  active: boolean;
+  image: string;
 };
 
 type Course = {
@@ -26,152 +27,265 @@ type Course = {
   teacher_share: number;
 };
 
-type User = {
+type Teacher = {
+  id: number;
   name: string;
   email: string;
-  subject?: Subject;
-  stage?: Stage;
-  commission?: string;
-  students_count?: number;
-  courses_count?: number;
-  total_income?: number;
-  courses?: Course[];
-  // أضف باقي الخصائص حسب الحاجة
+  secound_email: string;
+  active: boolean;
+  type: string;
+  teacher_type: string;
+  total_rate: number;
+  phone: string;
+  national_id: string;
+  image: string | null;
+  certificate_image: string | null;
+  experience_image: string | null;
+  id_card_front: string | null;
+  id_card_back: string | null;
+  country: Country;
+  account_holder_name: string | null;
+  account_number: string | null;
+  iban: string | null;
+  swift_code: string | null;
+  branch_name: string | null;
+  postal_transfer_full_name: string | null;
+  postal_transfer_office_address: string | null;
+  postal_transfer_recipient_name: string | null;
+  postal_transfer_recipient_phone: string | null;
+  wallets_name: string | null;
+  wallets_number: string | null;
+  commission: string;
+  courses_count: number;
+  students_count: number;
+  total_income: number;
+  courses: Course[];
+  rewards: string;
+  average_rating: number;
 };
 
-// بيانات افتراضية للاستخدام حتى يتم جلب البيانات الحقيقية
-const defaultCourseData = [
-  { name: 'يناير', طلاب: 40, إيرادات: 2400 },
-  { name: 'فبراير', طلاب: 30, إيرادات: 1398 },
-  { name: 'مارس', طلاب: 20, إيرادات: 9800 },
-  { name: 'أبريل', طلاب: 27, إيرادات: 3908 },
-  { name: 'مايو', طلاب: 18, إيرادات: 4800 },
-  { name: 'يونيو', طلاب: 23, إيرادات: 3800 },
-];
+type ApiResponse = {
+  result: string;
+  data: null;
+  message: {
+    message: string;
+    teacher: Teacher;
+  };
+  status: number;
+};
+
+// Custom Tooltip for Pie Chart
+const CustomPieTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
+        <p className="text-gray-800 font-medium">{payload[0].name}</p>
+        <p className="text-blue-600 font-semibold">
+          {payload[0].value} طالب
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function DashboardPage() {
-// eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
-  const { user } = useTeacherAuth()as { user: User };
-  const [courseData, setCourseData] = useState(defaultCourseData);
-  const [categoryData, setCategoryData] = useState([]);
-  const [stats, setStats] = useState({
-    totalStudents: 0,
-    totalCourses: 0,
-    totalHours: 2840,
-    totalIncome: 0
-  });
+  const [teacher, setTeacher] = useState<Teacher | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [courseData, setCourseData] = useState<any[]>([]);
+  const [categoryData, setCategoryData] = useState<any[]>([]);
+
+  const API_URL = '/api';
 
   useEffect(() => {
-    if (user) {
-      // تحديث الإحصائيات من بيانات المستخدم
-      setStats({
-        totalStudents: user.students_count || 0,
-        totalCourses: user.courses_count || 0,
-        totalHours: 2840, // هذه القيمة قد تحتاج إلى جلبها من API منفصل
-        totalIncome: user.total_income || 0
-      });
+    const fetchTeacherData = async () => {
+      try {
+        const token = Cookies.get('teacher_token');
+        if (!token) {
+          console.error('No token found');
+          return;
+        }
 
-      // تحويل بيانات الكورسات إلى تنسيق مناسب للرسم البياني
-      if (user.courses && user.courses.length > 0) {
-        const formattedData = user.courses.map((course, index) => ({
-          name: course.course_name,
-          طلاب: course.students_count,
-          إيرادات: course.course_income,
-          teacherShare: course.teacher_share
-        }));
-        setCourseData(formattedData);
+        const response = await fetch(`${API_URL}/teachers/check-auth`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const data: ApiResponse = await response.json();
+
+        if (data.result === 'Success' && data.message.teacher) {
+          setTeacher(data.message.teacher);
+          
+          // تحويل بيانات الكورسات إلى تنسيق مناسب للرسم البياني
+          if (data.message.teacher.courses && data.message.teacher.courses.length > 0) {
+            const formattedData = data.message.teacher.courses.map((course) => ({
+              name: course.course_name,
+              طلاب: course.students_count,
+              إيرادات: course.course_income,
+              teacherShare: course.teacher_share
+            }));
+            setCourseData(formattedData);
+          }
+
+          // بيانات التوزيع الجغرافي
+          setCategoryData([
+            { name: data.message.teacher.country.name, value: data.message.teacher.students_count }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error fetching teacher data:', error);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      // بيانات التصنيفات (يمكن استبدالها ببيانات حقيقية)
-      setCategoryData([
-       
-      ]);
-    }
-  }, [user]);
+    fetchTeacherData();
+  }, []);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">جاري تحميل البيانات...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!teacher) {
+    return (
+      <Layout>
+        <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-600 text-lg">حدث خطأ في تحميل البيانات</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">لوحة تحكم المعلم</h1>
+      <div className="p-6 bg-gray-50 min-h-screen">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">لوحة تحكم المعلم</h1>
+          <p className="text-gray-600">نظرة عامة على أدائك وإحصائياتك</p>
+        </div>
         
         {/* معلومات المعلم */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-4">
-                <span className="text-2xl font-bold text-blue-600 dark:text-blue-300">
-                  {user?.name ? user.name.charAt(0) : 'A'}
-                </span>
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
+                {teacher.image ? (
+                  <img 
+                    src={teacher.image} 
+                    alt={teacher.name}
+                    className="w-full h-full rounded-2xl object-cover"
+                  />
+                ) : (
+                  <FiUser className="text-white text-2xl" />
+                )}
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">{user?.name || 'المعلم'}</h2>
-                <p className="text-gray-600 dark:text-gray-300">{user?.email || 'example@example.com'}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {user?.subject?.name || 'المادة'} - {user?.stage?.name || 'المرحلة'}
-                </p>
+                <h2 className="text-xl font-semibold text-gray-800">{teacher.name}</h2>
+                <p className="text-gray-600">{teacher.email}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-sm text-gray-500">{teacher.country.name}</span>
+                  <span className="text-blue-600 font-medium">• {teacher.commission} عمولة</span>
+                </div>
               </div>
             </div>
-            <div className="text-left">
-              <p className="text-gray-600 dark:text-gray-300">نسبة العمولة</p>
-              <p className="text-xl font-bold text-blue-600 dark:text-blue-300">{user?.commission || '50%'}</p>
+            <div className="text-left bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl px-4 py-3 border border-blue-200">
+              <p className="text-blue-600 text-sm font-medium">نسبة العمولة</p>
+              <p className="text-2xl font-bold text-blue-700">{teacher.commission}</p>
             </div>
           </div>
         </div>
         
         {/* بطاقات الإحصائيات */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
-                <svg className="w-6 h-6 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                </svg>
+          {/* الطلاب */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-gray-600 text-sm font-medium mb-2">إجمالي الطلاب</h2>
+                <p className="text-3xl font-bold text-gray-800">{teacher.students_count}</p>
+                <div className="flex items-center gap-1 mt-2">
+                  <FiTrendingUp className="text-green-500 text-sm" />
+                  <span className="text-green-600 text-sm font-medium">+12%</span>
+                </div>
               </div>
-              <div className="mr-4">
-                <h2 className="text-gray-600 dark:text-gray-300 text-sm">إجمالي الطلاب</h2>
-                <p className="text-2xl font-bold text-gray-800 dark:text-white">{stats.totalStudents}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-green-100 dark:bg-green-900">
-                <svg className="w-6 h-6 text-green-600 dark:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"></path>
-                </svg>
-              </div>
-              <div className="mr-4">
-                <h2 className="text-gray-600 dark:text-gray-300 text-sm">إجمالي الكورسات</h2>
-                <p className="text-2xl font-bold text-gray-800 dark:text-white">{stats.totalCourses}</p>
+              <div className="p-3 rounded-xl bg-blue-50 border border-blue-100">
+                <FiUsers className="w-6 h-6 text-blue-600" />
               </div>
             </div>
           </div>
           
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-yellow-100 dark:bg-yellow-900">
-                <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+          {/* الكورسات */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-gray-600 text-sm font-medium mb-2">إجمالي الكورسات</h2>
+                <p className="text-3xl font-bold text-gray-800">{teacher.courses_count}</p>
+                <div className="flex items-center gap-1 mt-2">
+                  <FiTrendingUp className="text-green-500 text-sm" />
+                  <span className="text-green-600 text-sm font-medium">+5%</span>
+                </div>
               </div>
-              <div className="mr-4">
-                <h2 className="text-gray-600 dark:text-gray-300 text-sm">ساعات التعلم</h2>
-                <p className="text-2xl font-bold text-gray-800 dark:text-white">{stats.totalHours}</p>
+              <div className="p-3 rounded-xl bg-green-50 border border-green-100">
+                <FiBook className="w-6 h-6 text-green-600" />
               </div>
             </div>
           </div>
           
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-red-100 dark:bg-red-900">
-                <svg className="w-6 h-6 text-red-600 dark:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+          {/* التقييم */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-gray-600 text-sm font-medium mb-2">متوسط التقييم</h2>
+                <p className="text-3xl font-bold text-gray-800">{teacher.average_rating}/5</p>
+                <div className="flex items-center gap-1 mt-2">
+                  <div className="flex">
+                    {[...Array(5)].map((_, i) => (
+                      <FiStar 
+                        key={i}
+                        className={`w-4 h-4 ${
+                          i < Math.floor(teacher.average_rating) 
+                            ? 'text-yellow-400 fill-yellow-400' 
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
-              <div className="mr-4">
-                <h2 className="text-gray-600 dark:text-gray-300 text-sm">إجمالي الأرباح</h2>
-                <p className="text-2xl font-bold text-gray-800 dark:text-white">${stats.totalIncome}</p>
+              <div className="p-3 rounded-xl bg-yellow-50 border border-yellow-100">
+                <FiStar className="w-6 h-6 text-yellow-600" />
+              </div>
+            </div>
+          </div>
+          
+          {/* الأرباح */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-gray-600 text-sm font-medium mb-2">إجمالي الأرباح</h2>
+                <p className="text-3xl font-bold text-gray-800">${teacher.total_income.toLocaleString()}</p>
+                <div className="flex items-center gap-1 mt-2">
+                  <FiTrendingUp className="text-green-500 text-sm" />
+                  <span className="text-green-600 text-sm font-medium">+18%</span>
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-red-50 border border-red-100">
+                <FiDollarSign className="w-6 h-6 text-red-600" />
               </div>
             </div>
           </div>
@@ -180,114 +294,165 @@ export default function DashboardPage() {
         {/* قسم الرسوم البيانية */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* رسم بياني عمودي */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">أداء الكورسات</h2>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-800">أداء الكورسات</h2>
+              <div className="flex gap-2">
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                  <span className="text-sm text-gray-600">الطلاب</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-green-500 rounded"></div>
+                  <span className="text-sm text-gray-600">الإيرادات</span>
+                </div>
+              </div>
+            </div>
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={courseData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="طلاب" fill="#8884d8" />
-                  <Bar dataKey="إيرادات" fill="#82ca9d" />
-                </BarChart>
-              </ResponsiveContainer>
+              {courseData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={courseData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                    <XAxis 
+                      dataKey="name" 
+                      stroke="#6B7280"
+                      fontSize={12}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis 
+                      stroke="#6B7280"
+                      fontSize={12}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'white', 
+                        border: '1px solid #E5E7EB',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                        fontSize: '12px'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="طلاب" 
+                      fill="#3B82F6" 
+                      radius={[4, 4, 0, 0]}
+                      name="عدد الطلاب"
+                    />
+                    <Bar 
+                      dataKey="إيرادات" 
+                      fill="#10B981" 
+                      radius={[4, 4, 0, 0]}
+                      name="الإيرادات ($)"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-gray-500">
+                  <FiBook className="text-4xl text-gray-300 mb-2" />
+                  <p>لا توجد بيانات للعرض</p>
+                  <p className="text-sm text-gray-400">ابدأ بإضافة كورساتك الأولى</p>
+                </div>
+              )}
             </div>
           </div>
           
           {/* رسم بياني دائري */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">توزيع الطلاب حسب الجنسية</h2>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    // label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-800">توزيع الطلاب</h2>
+              <div className="text-sm text-gray-500">
+                حسب الجنسية
+              </div>
             </div>
-          </div>
-        </div>
-        
-        {/* قسم إضافي مع رسوم بيانية أخرى */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* رسم بياني خطي */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">تطور عدد الطلاب</h2>
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={courseData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="طلاب" stroke="#8884d8" activeDot={{ r: 8 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          
-          {/* رسم بياني مساحي */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">نمو الإيرادات</h2>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={courseData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="إيرادات" stroke="#82ca9d" fill="#82ca9d" />
-                </AreaChart>
-              </ResponsiveContainer>
+              {categoryData.length > 0 && teacher.students_count > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, value }) => `${name}: ${value}`}
+                      outerRadius={100}
+                      innerRadius={60}
+                      fill="#8884d8"
+                      dataKey="value"
+                      nameKey="name"
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomPieTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-gray-500">
+                  <FiUsers className="text-4xl text-gray-300 mb-2" />
+                  <p>لا توجد بيانات للعرض</p>
+                  <p className="text-sm text-gray-400">لا يوجد طلاب مسجلين بعد</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
         
         {/* قسم الكورسات */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">كورساتي</h2>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-gray-800">كورساتي</h2>
+            <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium border border-blue-200">
+              {teacher.courses_count} كورس
+            </div>
+          </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <table className="min-w-full divide-y divide-gray-200">
               <thead>
-                <tr>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">اسم الكورس</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">عدد الطلاب</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">إيرادات الكورس</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">حصتي</th>
+                <tr className="bg-gray-50">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">اسم الكورس</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عدد الطلاب</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">إيرادات الكورس</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">حصتي</th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {user?.courses && user.courses.length > 0 ? (
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  user.courses.map((course, index) => (
-                    <tr key={index}>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">{course.course_name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">{course.students_count}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">${course.course_income}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">${course.teacher_share}</td>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {teacher.courses && teacher.courses.length > 0 ? (
+                  teacher.courses.map((course, index) => (
+                    <tr key={index} className="hover:bg-gray-50 transition-colors duration-200">
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="text-gray-800 font-medium">{course.course_name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <FiUsers className="text-gray-400 text-sm" />
+                          <span className="text-gray-600">{course.students_count}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <FiDollarSign className="text-gray-400 text-sm" />
+                          <span className="text-gray-600">${course.course_income.toLocaleString()}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <FiDollarSign className="text-green-500 text-sm" />
+                          <span className="text-green-600 font-semibold">${course.teacher_share.toLocaleString()}</span>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} className="px-6 py-4 text-center text-gray-500 dark:text-gray-300">
-                      لا توجد كورسات حتى الآن
+                    <td colSpan={4} className="px-6 py-8 text-center">
+                      <div className="flex flex-col items-center text-gray-500">
+                        <FiBook className="text-3xl text-gray-300 mb-2" />
+                        <p>لا توجد كورسات حتى الآن</p>
+                        <p className="text-sm text-gray-400 mt-1">ابدأ بإضافة كورسك الأول</p>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -295,44 +460,6 @@ export default function DashboardPage() {
             </table>
           </div>
         </div>
-
-        {/* معلومات الحساب البنكي */}
-        {/* <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">معلومات الحساب البنكي</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-2">المعلومات المصرفية</h3>
-              <div className="space-y-2">
-                <p className="text-gray-600 dark:text-gray-400">
-                  <span className="font-medium">اسم صاحب الحساب:</span> {user?.account_holder_name || 'غير مضبوط'}
-                </p>
-                <p className="text-gray-600 dark:text-gray-400">
-                  <span className="font-medium">رقم الحساب:</span> {user?.account_number || 'غير مضبوط'}
-                </p>
-                <p className="text-gray-600 dark:text-gray-400">
-                  <span className="font-medium">IBAN:</span> {user?.iban || 'غير مضبوط'}
-                </p>
-                <p className="text-gray-600 dark:text-gray-400">
-                  <span className="font-medium">SWIFT Code:</span> {user?.swift_code || 'غير مضبوط'}
-                </p>
-                <p className="text-gray-600 dark:text-gray-400">
-                  <span className="font-medium">اسم الفرع:</span> {user?.branch_name || 'غير مضبوط'}
-                </p>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-2">المحافظ الإلكترونية</h3>
-              <div className="space-y-2">
-                <p className="text-gray-600 dark:text-gray-400">
-                  <span className="font-medium">اسم المحفظة:</span> {user?.wallets_name || 'غير مضبوط'}
-                </p>
-                <p className="text-gray-600 dark:text-gray-400">
-                  <span className="font-medium">رقم المحفظة:</span> {user?.wallets_number || 'غير مضبوط'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div> */}
       </div>
     </Layout>
   );

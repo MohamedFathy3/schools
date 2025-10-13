@@ -4,16 +4,17 @@ import { useParams, useRouter } from 'next/navigation'
 import { 
   FiArrowLeft, FiMail, FiPhone, FiCreditCard, FiUser, 
   FiDollarSign, FiBook, FiAward, FiFlag, FiUsers, 
-  FiStar, FiCalendar 
+  FiStar, FiCalendar, FiGift, FiEdit3, FiAtSign
 } from 'react-icons/fi'
 import Layout from '@/components/Layout'
 import Cookies from 'js-cookie'
 import { toast, ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+
 interface Teacher {
   id: number
   name: string
   email: string
+  secound_email: string | null
   phone: string
   national_id: string
   image: string
@@ -27,21 +28,26 @@ interface Teacher {
   wallets_name: string
   wallets_number: string
   commission?: string
+  rewards?: string
   country: { id: number; name: string; image: string; code: string }
   stage: { id: number; name: string; postion: number; image: string }
   subject: { id: number; name: string; postion: number; image: string }
-}
-
-// إحصائيات وهمية (يمكن تعويضها من API لو تحب)
-const teacherStats = {
-  totalStudents: 245,
-  totalCourses: 12,
-  rating: 4.8,
-  completedSessions: 156,
-  earnings: 12500
+  courses_count: number
+  students_count: number
+  total_income: number
+  average_rating: number
 }
 
 const API_URL = '/api'
+
+// Helper function to display data or N/A
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const displayData = (data: any, suffix: string = '') => {
+  if (!data || data === 'null' || data === 'undefined' || data === '' || data === null) {
+    return 'N/A'
+  }
+  return `${data}${suffix}`
+}
 
 export default function TeacherDetailPage() {
   const { id } = useParams()
@@ -49,6 +55,11 @@ export default function TeacherDetailPage() {
   const [teacher, setTeacher] = useState<Teacher | null>(null)
   const [loading, setLoading] = useState(true)
   const [commission, setCommission] = useState<number>(0)
+  const [reward, setReward] = useState<number>(0)
+  const [secondEmail, setSecondEmail] = useState<string>('')
+  const [isEditingCommission, setIsEditingCommission] = useState(false)
+  const [isEditingReward, setIsEditingReward] = useState(false)
+  const [isEditingSecondEmail, setIsEditingSecondEmail] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -58,15 +69,15 @@ export default function TeacherDetailPage() {
         const data = await res.json()
         if (data.status === 200) {
           setTeacher(data.data)
-          // تحويل العمولة من '5.00%' إلى رقم
-
           const comm = parseFloat(data.data.commission?.replace('%','')) || 0
-toast.success('تم التحديث بنجاح')
-
+          const rew = parseFloat(data.data.rewards) || 0
           setCommission(comm)
+          setReward(rew)
+          setSecondEmail(data.data.secound_email || '')
         }
       } catch (err) {
         console.error('Error fetching teacher:', err)
+        toast.error('Failed to load teacher data')
       } finally {
         setLoading(false)
       }
@@ -84,211 +95,433 @@ toast.success('تم التحديث بنجاح')
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ commission }),
+        body: JSON.stringify({ 
+          commission: commission,
+          secound_email: secondEmail,
+          reward: reward
+        }),
       })
       const data = await res.json()
       if (data.result === 'Success') {
-        toast.success('تم تحديث العمولة بنجاح')
+        toast.success('Commission updated successfully!')
         setTeacher({ ...teacher, commission: `${commission.toFixed(2)}%` })
+        setIsEditingCommission(false)
       } else {
-        toast.error(data.message || 'فشل في تحديث العمولة')
+        toast.error(data.message || 'Failed to update commission')
       }
     } catch (err) {
       console.error(err)
-      toast.error('حدث خطأ أثناء التحديث')
+      toast.error('Error updating commission')
+    }
+  }
+
+  const handleUpdateReward = async () => {
+    if (!teacher) return
+    try {
+      const token = Cookies.get('admin_token') || ''
+      const res = await fetch(`${API_URL}/teachers/${teacher.id}/commission`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          reward: reward,
+          commission: commission,
+          secound_email: secondEmail
+        }),
+      })
+      const data = await res.json()
+      if (data.result === 'Success') {
+        toast.success('Reward updated successfully!')
+        setTeacher({ ...teacher, rewards: reward.toString() })
+        setIsEditingReward(false)
+      } else {
+        toast.error(data.message || 'Failed to update reward')
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error('Error updating reward')
+    }
+  }
+
+  const handleUpdateSecondEmail = async () => {
+    if (!teacher) return
+    try {
+      const token = Cookies.get('admin_token') || ''
+      const res = await fetch(`${API_URL}/teachers/${teacher.id}/commission`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          secound_email: secondEmail,
+          commission: commission,
+          reward: reward
+        }),
+      })
+      const data = await res.json()
+      if (data.result === 'Success') {
+        toast.success('Second email updated successfully!')
+        setTeacher({ ...teacher, secound_email: secondEmail })
+        setIsEditingSecondEmail(false)
+      } else {
+        toast.error(data.message || 'Failed to update second email')
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error('Error updating second email')
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">جارِ التحميل...</div>
-      </div>
+      <Layout>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 text-lg">Loading teacher information...</p>
+          </div>
+        </div>
+      </Layout>
     )
   }
 
   if (!teacher) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">لم يتم العثور على المدرس</h2>
-          <button
-            onClick={() => router.back()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
-          >
-            العودة
-          </button>
+      <Layout>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Teacher Not Found</h2>
+            <button
+              onClick={() => router.back()}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
+            >
+              Go Back
+            </button>
+          </div>
         </div>
-      </div>
+      </Layout>
     )
   }
 
   return (
     <Layout>
       <ToastContainer 
-  position="top-right"
-  autoClose={3000}
-  hideProgressBar={false}
-  newestOnTop={false}
-  closeOnClick
-  rtl={false}
-  pauseOnFocusLoss
-  draggable
-  pauseOnHover
-  theme="dark"
-/>
+        position="top-right"
+        autoClose={3000}
+        theme="light"
+      />
 
-      <div className="min-h-screen bg-gray-900 text-gray-100">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
         {/* Header */}
-        <div className="bg-gradient-to-r from-gray-800 to-gray-900 border-b border-gray-700">
-          <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              <FiArrowLeft className="ml-2" />
-              العودة للقائمة
-            </button>
-            <h1 className="text-2xl font-bold">تفاصيل المعلم</h1>
+        <div className="bg-white shadow-lg border-b">
+          <div className="container mx-auto px-6 py-6">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => router.back()}
+                className="flex items-center text-blue-600 hover:text-blue-700 transition-colors font-semibold"
+              >
+                <FiArrowLeft className="ml-2" />
+                Back to Teachers List
+              </button>
+              <h1 className="text-3xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Teacher Profile
+              </h1>
+            </div>
           </div>
         </div>
 
         <div className="container mx-auto px-6 py-8">
-          {/* تعديل العمولة أعلى الإحصائيات */}
-          <div className="bg-gray-800 rounded-2xl p-6 mb-8 border border-gray-700 shadow-lg flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <FiDollarSign className="text-yellow-400 text-2xl" />
-              <div>
-                <p className="text-gray-400">نسبة العمولة الحالية</p>
-                <div className="flex items-center space-x-2 mt-1">
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={commission}
-                    onChange={e => setCommission(Number(e.target.value))}
-                    className="w-20 p-2 rounded-lg bg-gray-750 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  />
-                  <span className="text-gray-400">%</span>
-                  <button
-                    onClick={handleUpdateCommission}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition"
-                  >
-                    تحديث
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* إحصائيات */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-lg transition">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-xl">إجمالي الطلاب</p>
-                  <p className="text-2xl font-bold text-white">{teacherStats.totalStudents}</p>
+                  <p className="text-gray-600 text-sm font-medium">Total Courses</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{teacher.courses_count}</p>
                 </div>
-                <div className="bg-blue-500/20 p-3 rounded-full">
-                  <FiUsers className="text-blue-400 text-xl" />
+                <div className="p-3 bg-blue-100 rounded-xl">
+                  <FiBook className="text-blue-600 text-xl" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-lg transition">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-xl">الكورسات</p>
-                  <p className="text-2xl font-bold text-white">{teacherStats.totalCourses}</p>
+                  <p className="text-gray-600 text-sm font-medium">Total Students</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{teacher.students_count}</p>
                 </div>
-                <div className="bg-green-500/20 p-3 rounded-full">
-                  <FiBook className="text-green-400 text-xl" />
+                <div className="p-3 bg-green-100 rounded-xl">
+                  <FiUsers className="text-green-600 text-xl" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-lg transition">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-xl">التقييم</p>
-                  <p className="text-2xl font-bold text-white">{teacherStats.rating}/5</p>
-                </div>
-                <div className="bg-yellow-500/20 p-3 rounded-full">
-                  <FiStar className="text-yellow-400 text-xl" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-lg transition">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-xl">الجلسات المكتملة</p>
-                  <p className="text-2xl font-bold text-white">{teacherStats.completedSessions}</p>
-                </div>
-                <div className="bg-purple-500/20 p-3 rounded-full">
-                  <FiCalendar className="text-purple-400 text-xl" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-lg transition">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-xl">الأرباح</p>
-                  <p className="text-2xl font-bold text-white">
-                    {teacherStats.earnings.toLocaleString()} ج.م
+                  <p className="text-gray-600 text-sm font-medium">Total Income</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                    {teacher.total_income.toLocaleString()} EGP
                   </p>
                 </div>
-                <div className="bg-green-500/20 p-3 rounded-full">
-                  <FiDollarSign className="text-green-400 text-xl" />
+                <div className="p-3 bg-yellow-100 rounded-xl">
+                  <FiDollarSign className="text-yellow-600 text-xl" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm font-medium">Average Rating</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{teacher.average_rating}/5</p>
+                </div>
+                <div className="p-3 bg-purple-100 rounded-xl">
+                  <FiStar className="text-purple-600 text-xl" />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* التفاصيل */}
+          {/* Commission, Reward and Second Email Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {/* Commission Card */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-3 bg-blue-100 rounded-xl">
+                    <FiDollarSign className="text-blue-600 text-xl" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Commission Rate</h3>
+                    <p className="text-gray-600 text-sm">Current commission percentage</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsEditingCommission(!isEditingCommission)}
+                  className="p-2 text-gray-400 hover:text-blue-600 transition-colors hover:bg-blue-50 rounded-lg"
+                >
+                  <FiEdit3 className="w-5 h-5" />
+                </button>
+              </div>
+
+              {isEditingCommission ? (
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={commission}
+                      onChange={e => setCommission(Number(e.target.value))}
+                      className="flex-1 p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 font-medium"
+                      placeholder="Enter commission percentage"
+                    />
+                    <span className="text-gray-600 font-medium">%</span>
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => setIsEditingCommission(false)}
+                      className="flex-1 px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUpdateCommission}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    >
+                      Update
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {displayData(teacher.commission)}
+                    </p>
+                    <p className="text-gray-600 mt-1 text-sm">Commission rate</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Reward Card */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-3 bg-green-100 rounded-xl">
+                    <FiGift className="text-green-600 text-xl" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Teacher Reward</h3>
+                    <p className="text-gray-600 text-sm">Bonus reward amount</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsEditingReward(!isEditingReward)}
+                  className="p-2 text-gray-400 hover:text-green-600 transition-colors hover:bg-green-50 rounded-lg"
+                >
+                  <FiEdit3 className="w-5 h-5" />
+                </button>
+              </div>
+
+              {isEditingReward ? (
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="number"
+                      min={0}
+                      value={reward}
+                      onChange={e => setReward(Number(e.target.value))}
+                      className="flex-1 p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-gray-900 font-medium"
+                      placeholder="Enter reward amount"
+                    />
+                    <span className="text-gray-600 font-medium">EGP</span>
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => setIsEditingReward(false)}
+                      className="flex-1 px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUpdateReward}
+                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                    >
+                      Update
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {displayData(teacher.rewards, ' EGP')}
+                    </p>
+                    <p className="text-gray-600 mt-1 text-sm">Reward amount</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Second Email Card */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-3 bg-purple-100 rounded-xl">
+                    <FiAtSign className="text-purple-600 text-xl" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Second Email</h3>
+                    <p className="text-gray-600 text-sm">Additional email address</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsEditingSecondEmail(!isEditingSecondEmail)}
+                  className="p-2 text-gray-400 hover:text-purple-600 transition-colors hover:bg-purple-50 rounded-lg"
+                >
+                  <FiEdit3 className="w-5 h-5" />
+                </button>
+              </div>
+
+              {isEditingSecondEmail ? (
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="email"
+                      value={secondEmail}
+                      onChange={e => setSecondEmail(e.target.value)}
+                      className="flex-1 p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 font-medium"
+                      placeholder="Enter second email"
+                    />
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => setIsEditingSecondEmail(false)}
+                      className="flex-1 px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUpdateSecondEmail}
+                      className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                    >
+                      Update
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xl font-bold text-gray-900 break-all">
+                      {displayData(teacher.secound_email)}
+                    </p>
+                    <p className="text-gray-600 mt-1 text-sm">Secondary contact email</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Main Content */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* البطاقة الشخصية */}
+            {/* Teacher Profile Card */}
             <div className="lg:col-span-1">
-              <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 sticky top-6">
                 <div className="text-center mb-6">
                   <img
-                    src={teacher.image}
+                    src={displayData(teacher.image) !== 'N/A' ? teacher.image : '/default-avatar.png'}
                     alt={teacher.name}
-                    className="w-32 h-32 rounded-full object-cover mx-auto border-4 border-gray-700 shadow-lg"
+                    className="w-32 h-32 rounded-full object-cover mx-auto border-4 border-gray-100 shadow-lg"
                   />
-                  <h2 className="text-2xl font-bold mt-4">{teacher.name}</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 mt-4">{displayData(teacher.name)}</h2>
+                  <p className="text-gray-600 mt-2">Professional Teacher</p>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center p-3 bg-gray-750 rounded-lg">
-                    <FiMail className="text-blue-400 ml-3" />
+                  <div className="flex items-center p-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <FiMail className="text-blue-500 ml-3" />
                     <div>
-                      <p className="text-sm text-gray-400">البريد الإلكتروني</p>
-                      <p className="text-white">{teacher.email}</p>
+                      <p className="text-sm text-gray-600">Primary Email</p>
+                      <p className="text-gray-900 font-medium break-all">{displayData(teacher.email)}</p>
                     </div>
                   </div>
-                  <div className="flex items-center p-3 bg-gray-750 rounded-lg">
-                    <FiPhone className="text-green-400 ml-3" />
+                  
+                  <div className="flex items-center p-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <FiPhone className="text-green-500 ml-3" />
                     <div>
-                      <p className="text-sm text-gray-400">رقم الهاتف</p>
-                      <p className="text-white">{teacher.phone}</p>
+                      <p className="text-sm text-gray-600">Phone Number</p>
+                      <p className="text-gray-900 font-medium">{displayData(teacher.phone)}</p>
                     </div>
                   </div>
-                  <div className="flex items-center p-3 bg-gray-750 rounded-lg">
-                    <FiUser className="text-purple-400 ml-3" />
+                  
+                  <div className="flex items-center p-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <FiUser className="text-purple-500 ml-3" />
                     <div>
-                      <p className="text-sm text-gray-400">الرقم القومي</p>
-                      <p className="text-white">{teacher.national_id}</p>
+                      <p className="text-sm text-gray-600">National ID</p>
+                      <p className="text-gray-900 font-medium">{displayData(teacher.national_id)}</p>
                     </div>
                   </div>
-                  <div className="flex items-center p-3 bg-gray-750 rounded-lg">
-                    <FiFlag className="text-red-400 ml-3" />
+                  
+                  <div className="flex items-center p-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <FiFlag className="text-red-500 ml-3" />
                     <div>
-                      <p className="text-sm text-gray-400">البلد</p>
-                      <div className="flex items-center">
-                        <img src={teacher.country.image} alt={teacher.country.name} className="w-6 h-6 rounded-full ml-2" />
-                        <span className="text-white">{teacher.country.name}</span>
+                      <p className="text-sm text-gray-600">Country</p>
+                      <div className="flex items-center mt-1">
+                        {displayData(teacher.country?.image) !== 'N/A' && (
+                          <img 
+                            src={teacher.country.image} 
+                            alt={teacher.country.name} 
+                            className="w-6 h-6 rounded-full ml-2" 
+                          />
+                        )}
+                        <span className="text-gray-900 font-medium">{displayData(teacher.country?.name)}</span>
                       </div>
                     </div>
                   </div>
@@ -296,97 +529,116 @@ toast.success('تم التحديث بنجاح')
               </div>
             </div>
 
-            {/* باقي التفاصيل */}
+            {/* Details Sections */}
             <div className="lg:col-span-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* أكاديمية */}
-                <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-                  <h3 className="text-lg font-bold mb-4 flex items-center">
-                    <FiBook className="ml-2 text-blue-400" />
-                    المعلومات الأكاديمية
+                {/* Academic Information */}
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <FiBook className="ml-2 text-blue-500" />
+                    Academic Information
                   </h3>
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center p-3 bg-gray-750 rounded-lg">
-                      <span className="text-gray-400">المرحلة:</span>
-                      <span className="text-white font-medium">{teacher.stage?.name}</span>
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <span className="text-gray-600">Stage:</span>
+                      <span className="text-gray-900 font-medium">{displayData(teacher.stage?.name)}</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-gray-750 rounded-lg">
-                      <span className="text-gray-400">المادة:</span>
-                      <span className="text-white font-medium">{teacher.subject.name}</span>
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <span className="text-gray-600">Subject:</span>
+                      <span className="text-gray-900 font-medium">{displayData(teacher.subject?.name)}</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-gray-750 rounded-lg">
-                      <span className="text-gray-400">ترتيب المادة:</span>
-                      <span className="text-white font-medium">{teacher.subject.postion}</span>
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <span className="text-gray-600">Subject Position:</span>
+                      <span className="text-gray-900 font-medium">{displayData(teacher.subject?.postion)}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* بنكية */}
-                <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-                  <h3 className="text-lg font-bold mb-4 flex items-center">
-                    <FiCreditCard className="ml-2 text-green-400" />
-                    المعلومات البنكية
+                {/* Banking Information */}
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <FiCreditCard className="ml-2 text-green-500" />
+                    Banking Information
                   </h3>
                   <div className="space-y-3">
-                    <div className="p-3 bg-gray-750 rounded-lg">
-                      <p className="text-sm text-gray-400">صاحب الحساب</p>
-                      <p className="text-white">{teacher.account_holder_name}</p>
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-600">Account Holder</p>
+                      <p className="text-gray-900 font-medium">{displayData(teacher.account_holder_name)}</p>
                     </div>
-                    <div className="p-3 bg-gray-750 rounded-lg">
-                      <p className="text-sm text-gray-400">رقم الحساب</p>
-                      <p className="text-white">{teacher.account_number}</p>
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-600">Account Number</p>
+                      <p className="text-gray-900 font-medium">{displayData(teacher.account_number)}</p>
                     </div>
-                    <div className="p-3 bg-gray-750 rounded-lg">
-                      <p className="text-sm text-gray-400">الآيبان</p>
-                      <p className="text-white">{teacher.iban}</p>
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-600">IBAN</p>
+                      <p className="text-gray-900 font-medium">{displayData(teacher.iban)}</p>
                     </div>
-                    <div className="p-3 bg-gray-750 rounded-lg">
-                      <p className="text-sm text-gray-400">اسم الفرع</p>
-                      <p className="text-white">{teacher.branch_name}</p>
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-600">Branch Name</p>
+                      <p className="text-gray-900 font-medium">{displayData(teacher.branch_name)}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* المحافظ */}
-                <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-                  <h3 className="text-lg font-bold mb-4 flex items-center">
-                    <FiDollarSign className="ml-2 text-yellow-400" />
-                    المحافظ الإلكترونية
+                {/* E-Wallets */}
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <FiDollarSign className="ml-2 text-yellow-500" />
+                    E-Wallets
                   </h3>
                   <div className="space-y-3">
-                    <div className="p-3 bg-gray-750 rounded-lg">
-                      <p className="text-sm text-gray-400">نوع المحفظة</p>
-                      <p className="text-white">{teacher.wallets_name}</p>
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-600">Wallet Type</p>
+                      <p className="text-gray-900 font-medium">{displayData(teacher.wallets_name)}</p>
                     </div>
-                    <div className="p-3 bg-gray-750 rounded-lg">
-                      <p className="text-sm text-gray-400">رقم المحفظة</p>
-                      <p className="text-white">{teacher.wallets_number}</p>
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-600">Wallet Number</p>
+                      <p className="text-gray-900 font-medium">{displayData(teacher.wallets_number)}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* المستندات */}
-                <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-                  <h3 className="text-lg font-bold mb-4 flex items-center">
-                    <FiAward className="ml-2 text-purple-400" />
-                    المستندات
+                {/* Documents */}
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <FiAward className="ml-2 text-purple-500" />
+                    Documents
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm text-gray-400 mb-2">صورة الشهادة</p>
-                      <a href={teacher.certificate_image} target="_blank" rel="noopener noreferrer">
-                        <img src={teacher.certificate_image} alt="شهادة" className="w-full h-32 object-cover rounded-lg hover:opacity-80 transition-opacity" />
-                      </a>
+                      <p className="text-sm text-gray-600 mb-2">Certificate Image</p>
+                      {displayData(teacher.certificate_image) !== 'N/A' ? (
+                        <a href={teacher.certificate_image} target="_blank" rel="noopener noreferrer">
+                          <img 
+                            src={teacher.certificate_image} 
+                            alt="Certificate" 
+                            className="w-full h-32 object-cover rounded-lg hover:opacity-80 transition-opacity border-2 border-gray-200 hover:border-blue-500" 
+                          />
+                        </a>
+                      ) : (
+                        <div className="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-gray-200 border-dashed">
+                          <span className="text-gray-500">No certificate image</span>
+                        </div>
+                      )}
                     </div>
                     <div>
-                      <p className="text-sm text-gray-400 mb-2">صورة الخبرة</p>
-                      <a href={teacher.experience_image} target="_blank" rel="noopener noreferrer">
-                        <img src={teacher.experience_image} alt="خبرة" className="w-full h-32 object-cover rounded-lg hover:opacity-80 transition-opacity" />
-                      </a>
+                      <p className="text-sm text-gray-600 mb-2">Experience Image</p>
+                      {displayData(teacher.experience_image) !== 'N/A' ? (
+                        <a href={teacher.experience_image} target="_blank" rel="noopener noreferrer">
+                          <img 
+                            src={teacher.experience_image} 
+                            alt="Experience" 
+                            className="w-full h-32 object-cover rounded-lg hover:opacity-80 transition-opacity border-2 border-gray-200 hover:border-green-500" 
+                          />
+                        </a>
+                      ) : (
+                        <div className="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-gray-200 border-dashed">
+                          <span className="text-gray-500">No experience image</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>

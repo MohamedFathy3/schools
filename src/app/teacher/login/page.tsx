@@ -45,7 +45,7 @@ export default function AuthPage() {
 
     setIsLoading(true)
     try {
-      const success = await login(email, password, remember)
+      const success = await login(email, password)
       if (success) {
         toast.success('تم تسجيل الدخول بنجاح ✅')
         setTimeout(() => {
@@ -54,6 +54,7 @@ export default function AuthPage() {
       } else {
         toast.error('فشل تسجيل الدخول ❌')
       }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Login error:', err)
       toast.error('حدث خطأ أثناء تسجيل الدخول ❌')
@@ -172,7 +173,7 @@ export default function AuthPage() {
             </label>
 
             <Link 
-              href="/auth/signup" 
+              href="https://professionalacademyedu.com/register" 
               className="text-blue-600 hover:text-blue-800 transition-colors duration-300 font-medium"
             >
               ليس لديك حساب؟ سجل الآن

@@ -1,13 +1,11 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-
 'use client'
 import React, { useState, useEffect } from 'react'
-import { FiEdit, FiTrash2, FiEye, FiPlus, FiSearch, FiVideo, FiFileText, FiDollarSign, FiUsers, FiBook, FiFilter, FiChevronDown, FiChevronUp, FiX } from 'react-icons/fi'
+import { FiEdit, FiTrash2, FiEye, FiPlus, FiSearch, FiVideo, FiFileText, FiDollarSign, FiUsers, FiBook, FiFilter, FiChevronDown, FiChevronUp, FiX, FiImage } from 'react-icons/fi'
 import { ToastContainer, toast } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
 import Layout from '@/components/Layoutteacher'
 import Cookies from 'js-cookie'
 import Link from 'next/link'
+import {useTeacherAuth} from '@/contexts/teacherAuthContext'
 
 interface Course {
   id: number
@@ -68,12 +66,21 @@ const CourseModal = ({
   course,
   isOpen,
   onClose,
-  onUpdate
+  onUpdate,
+  stages,
+  subjects,
+  countries
 }: {
   course: Course | null
   isOpen: boolean
   onClose: () => void
   onUpdate: (courseId: number, data: UpdateCoursePayload) => Promise<void>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  stages: any[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  subjects: any[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  countries: any[]
 }) => {
   const [formData, setFormData] = useState<UpdateCoursePayload>({
     title: '',
@@ -97,9 +104,9 @@ const CourseModal = ({
       setFormData({
         title: course.title || '',
         description: course.description || '',
-        stage_id: course.stage?.id.toString(),
-        subject_id: course.subject.id.toString(),
-        country_id: course.country.id.toString(),
+        stage_id: course.stage?.id?.toString() || '',
+        subject_id: course.subject?.id?.toString() || '',
+        country_id: course.country?.id?.toString() || '',
         type: course.type || '',
         price: course.price || '',
         discount: course.discount || '',
@@ -156,132 +163,244 @@ const CourseModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold mb-6">تعديل الكورس</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
+        <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-800">تعديل الكورس</h2>
+          <button 
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <FiX size={24} />
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium mb-1">عنوان الكورس</label>
+              <label className="block text-sm font-medium mb-2 text-gray-700">عنوان الكورس</label>
               <input
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
+                className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 required
               />
               {errors.title && (
-                <p className="text-red-400 text-sm mt-1">{errors.title.join(', ')}</p>
+                <p className="text-red-500 text-sm mt-1">{errors.title.join(', ')}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">السعر الأصلي</label>
+              <label className="block text-sm font-medium mb-2 text-gray-700">السعر الأصلي</label>
               <input
                 type="number"
                 name="original_price"
                 value={formData.original_price}
                 onChange={handleChange}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
+                className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 required
               />
               {errors.original_price && (
-                <p className="text-red-400 text-sm mt-1">{errors.original_price.join(', ')}</p>
+                <p className="text-red-500 text-sm mt-1">{errors.original_price.join(', ')}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">السعر الحالي</label>
+              <label className="block text-sm font-medium mb-2 text-gray-700">السعر الحالي</label>
               <input
                 type="number"
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
+                className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 required
               />
               {errors.price && (
-                <p className="text-red-400 text-sm mt-1">{errors.price.join(', ')}</p>
+                <p className="text-red-500 text-sm mt-1">{errors.price.join(', ')}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">النوع</label>
+              <label className="block text-sm font-medium mb-2 text-gray-700">الخصم (%)</label>
+              <input
+                type="number"
+                name="discount"
+                value={formData.discount}
+                onChange={handleChange}
+                className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                required
+              />
+              {errors.discount && (
+                <p className="text-red-500 text-sm mt-1">{errors.discount.join(', ')}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-700">النوع</label>
               <select
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
+                className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 required
               >
                 <option value="">اختر النوع</option>
-                <option value="online">online</option>
-                <option value="recorded">recorded</option>
+                <option value="online">اونلاين</option>
+                <option value="recorded">مسجل</option>
               </select>
               {errors.type && (
-                <p className="text-red-400 text-sm mt-1">{errors.type.join(', ')}</p>
+                <p className="text-red-500 text-sm mt-1">{errors.type.join(', ')}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-700">المرحلة</label>
+              <select
+                name="stage_id"
+                value={formData.stage_id}
+                onChange={handleChange}
+                className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                required
+              >
+                <option value="">اختر المرحلة</option>
+                {stages.map((stage) => (
+                  <option key={stage.id} value={stage.id}>
+                    {stage.name}
+                  </option>
+                ))}
+              </select>
+              {errors.stage_id && (
+                <p className="text-red-500 text-sm mt-1">{errors.stage_id.join(', ')}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-700">المادة</label>
+              <select
+                name="subject_id"
+                value={formData.subject_id}
+                onChange={handleChange}
+                className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                required
+              >
+                <option value="">اختر المادة</option>
+                {subjects.map((subject) => (
+                  <option key={subject.id} value={subject.id}>
+                    {subject.name}
+                  </option>
+                ))}
+              </select>
+              {errors.subject_id && (
+                <p className="text-red-500 text-sm mt-1">{errors.subject_id.join(', ')}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-700">البلد</label>
+              <select
+                name="country_id"
+                value={formData.country_id}
+                onChange={handleChange}
+                className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                required
+              >
+                <option value="">اختر البلد</option>
+                {countries.map((country) => (
+                  <option key={country.id} value={country.id}>
+                    {country.name}
+                  </option>
+                ))}
+              </select>
+              {errors.country_id && (
+                <p className="text-red-500 text-sm mt-1">{errors.country_id.join(', ')}</p>
               )}
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">الوصف</label>
+              <label className="block text-sm font-medium mb-2 text-gray-700">الوصف</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
+                className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 required
               />
               {errors.description && (
-                <p className="text-red-400 text-sm mt-1">{errors.description.join(', ')}</p>
+                <p className="text-red-500 text-sm mt-1">{errors.description.join(', ')}</p>
               )}
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">ماذا سوف تتعلم</label>
+              <label className="block text-sm font-medium mb-2 text-gray-700">ماذا سوف تتعلم</label>
               <textarea
                 name="what_you_will_learn"
                 value={formData.what_you_will_learn}
                 onChange={handleChange}
-                rows={2}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
+                rows={3}
+                className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                placeholder="اكتب ما سيتعلمه الطلاب في هذا الكورس..."
               />
+              {errors.what_you_will_learn && (
+                <p className="text-red-500 text-sm mt-1">{errors.what_you_will_learn.join(', ')}</p>
+              )}
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">رابط الفيديو التعريفي</label>
+              <label className="block text-sm font-medium mb-2 text-gray-700">رابط الفيديو التعريفي</label>
               <input
                 type="url"
                 name="intro_video_url"
                 value={formData.intro_video_url}
                 onChange={handleChange}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
+                className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                placeholder="https://youtube.com/..."
               />
+              {errors.intro_video_url && (
+                <p className="text-red-500 text-sm mt-1">{errors.intro_video_url.join(', ')}</p>
+              )}
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">صورة الكورس</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
-              />
+              <label className="block text-sm font-medium mb-2 text-gray-700">صورة الكورس</label>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                </div>
+                {course?.image && (
+                  <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-300">
+                    <img 
+                      src={course.image} 
+                      alt="صورة الكورس الحالية" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
+              {errors.image && (
+                <p className="text-red-500 text-sm mt-1">{errors.image.join(', ')}</p>
+              )}
             </div>
           </div>
 
-          <div className="flex gap-4 pt-4">
+          <div className="flex gap-4 pt-6 border-t border-gray-200">
             <button
               type="submit"
-              className="bg-blue-600 text-white px-6 py-2 rounded-xl"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-medium transition-colors flex items-center gap-2"
             >
+              <FiEdit />
               حفظ التغييرات
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="bg-gray-600 text-white px-6 py-2 rounded-xl"
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-8 py-3 rounded-xl font-medium transition-colors"
             >
               إلغاء
             </button>
@@ -291,17 +410,18 @@ const CourseModal = ({
     </div>
   )
 }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [stages, setStages] = useState<any[]>([])
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [subjects, setSubjects] = useState<any[]>([])
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [countries, setCountries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+
+  const { user } = useTeacherAuth()
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table')
   const [searchTerm, setSearchTerm] = useState('')
   const [editingCourse, setEditingCourse] = useState<Course | null>(null)
@@ -318,7 +438,70 @@ export default function CoursesPage() {
     maxSubscribers: ''
   })
 
-  const API_URL = '/api'; // بدل ما تستخدم https://back.professionalacademyedu.com/api مباشرة
+  const API_URL = '/api'; 
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fetchData = async (endpoint: string, body: any = {}) => {
+    try {
+      const res = await fetch(`${API_URL}/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...body,
+          filters: {},
+          orderBy: "id",
+          orderByDirection: "asc",
+          perPage: 100,
+          paginate: true,
+          delete: false
+        }),
+      });
+
+      const data = await res.json();
+      if (data.status === 200) {
+        return data.data || [];
+      } else {
+        throw new Error(data.message || "فشل في جلب البيانات");
+      }
+    } catch (err) {
+      toast.error("حدث خطأ أثناء جلب البيانات");
+      return [];
+    }
+  };
+
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      const [stagesData, countriesData, subjectsData] = await Promise.all([
+        fetchData("stage/index"),
+        fetchData("country/index"),
+        fetchData("subject/index"),
+      ]);
+
+      console.log('Stages:', stagesData);
+      console.log('Countries:', countriesData);
+      console.log('Subjects:', subjectsData);
+
+      return { stages: stagesData, countries: countriesData, subjects: subjectsData };
+    } catch (err) {
+      toast.error("تعذر تحميل البيانات");
+      return { stages: [], countries: [], subjects: [] };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const load = async () => {
+      const { stages, countries, subjects } = await fetchAllData();
+      setStages(stages);
+      setCountries(countries);
+      setSubjects(subjects);
+    };
+    load();
+  }, []);
 
   const fetchCourses = async () => {
     try {
@@ -328,15 +511,13 @@ export default function CoursesPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          filters: { "teacher_id": Cookies.get('teacher_id') || '' },
+          filters: { "teacher_id": user?.id || '' },
           orderBy: "id",
           orderByDirection: "asc",
           perPage: 100,
           paginate: true,
           delete: false
         })
-        
-        
       })
       const data = await res.json()
       if (data.status === 200) {
@@ -348,7 +529,8 @@ export default function CoursesPage() {
       setLoading(false)
     }
   }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateCourse = async (courseId: number, formData: any) => {
     try {
       const payload = new FormData()
@@ -402,27 +584,6 @@ export default function CoursesPage() {
 
   useEffect(() => {
     fetchCourses()
-    
-    // Fetch stages, subjects, and countries
-    const fetchInitialData = async () => {
-      try {
-        const token = Cookies.get('teacher_token')
-        if (!token) return
-        
-        // You'll need to implement these API calls based on your backend
-        // const stagesRes = await fetch(`${API_URL}/stages`, { headers: { Authorization: `Bearer ${token}` } })
-        // const subjectsRes = await fetch(`${API_URL}/subjects`, { headers: { Authorization: `Bearer ${token}` } })
-        // const countriesRes = await fetch(`${API_URL}/countries`, { headers: { Authorization: `Bearer ${token}` } })
-        
-        // setStages(await stagesRes.json())
-        // setSubjects(await subjectsRes.json())
-        // setCountries(await countriesRes.json())
-      } catch (err) {
-        console.error('Error fetching initial data:', err)
-      }
-    }
-    
-    fetchInitialData()
   }, [])
 
   const filteredCourses = courses.filter(course => {
@@ -464,129 +625,156 @@ export default function CoursesPage() {
 
   const hasActiveFilters = Object.values(filters).some(value => value !== '')
 
+  const handleDeleteCourse = async (courseId: number) => {
+    if (!confirm('هل أنت متأكد من حذف هذا الكورس؟')) return
+
+    try {
+      const token = Cookies.get('teacher_token')
+      if (!token) {
+        toast.error('يرجى تسجيل الدخول أولاً')
+        return
+      }
+
+      const res = await fetch(`${API_URL}/course/delete`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          items: [courseId]
+        })
+      })
+
+      const data = await res.json()
+
+      if (res.ok && (data.status === 200 || data.message?.includes("success"))) {
+        toast.success('تم حذف الكورس بنجاح')
+        fetchCourses()
+      } else {
+        toast.error(data.message || 'فشل في حذف الكورس')
+      }
+    } catch (err) {
+      toast.error('حدث خطأ أثناء الحذف')
+    }
+  }
+
   if (loading) {
     return (
       <Layout>
-        <div className="p-6 bg-gray-800 min-h-screen flex items-center justify-center">
-          <div className="text-white">جار التحميل...</div>
+        <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+          <div className="text-gray-600">جار التحميل...</div>
         </div>
       </Layout>
     )
   }
 
-
-  const handleDeleteCourse = async (courseId: number) => {
-  if (!confirm('هل أنت متأكد من حذف هذا الكورس؟')) return
-
-  try {
-    const token = Cookies.get('teacher_token')
-    if (!token) {
-      toast.error('يرجى تسجيل الدخول أولاً')
-      return
-    }
-
-    const res = await fetch(`${API_URL}/course/delete`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-       Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        items: [courseId]
-      })
-    })
-
-    const data = await res.json()
-
-    if (res.ok && (data.status === 200 || data.message?.includes("success"))) {
-      toast.success('تم حذف الكورس بنجاح')
-      fetchCourses()
-    } else {
-      toast.error(data.message || 'فشل في حذف الكورس')
-    }
-  } catch (err) {
-    toast.error('حدث خطأ أثناء الحذف')
-  }
-}
-
   return (
     <Layout>
-      <div className="p-6 bg-gray-800 min-h-screen">
+      <div className="p-6 bg-gray-50 min-h-screen">
         <ToastContainer />
         
-        <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
-          <h1 className="text-3xl font-bold">إدارة الكورسات</h1>
-          
-          <div className="flex gap-4 flex-wrap">
-            <div className="relative">
-              <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="ابحث عن كورس، معلم، أو مادة..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-gray-700 border border-gray-600 text-white p-2 rounded-lg pl-10"
-              />
+        {/* Header Section */}
+        <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-200">
+          <div className="flex flex-wrap justify-between items-center gap-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">إدارة الكورسات</h1>
+              <p className="text-gray-600">إدارة وعرض جميع الكورسات الخاصة بك</p>
             </div>
             
-            <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className={`px-4 py-2 rounded-lg flex items-center ${showFilters ? 'bg-blue-600' : 'bg-gray-700'} text-white`}
-            >
-              <FiFilter className="ml-2" /> فلاتر
-              {hasActiveFilters && (
-                <span className="mr-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              )}
-            </button>
-            
-            <div className="flex bg-gray-700 rounded-lg p-1">
-              <button
-                onClick={() => setViewMode('card')}
-                className={`p-2 rounded-lg ${viewMode === 'card' ? 'bg-blue-600 text-white' : 'text-gray-300'}`}
+            <div className="flex gap-4 flex-wrap">
+              <div className="relative">
+                <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="ابحث عن كورس، معلم، أو مادة..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-white border border-gray-300 text-gray-800 p-3 rounded-xl pl-12 w-80 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                />
+              </div>
+              
+              <button 
+                onClick={() => setShowFilters(!showFilters)}
+                className={`px-4 py-3 rounded-xl flex items-center gap-2 transition-all ${
+                  showFilters 
+                    ? 'bg-blue-600 text-white shadow-lg' 
+                    : 'bg-white text-gray-700 border border-gray-300 hover:border-blue-500'
+                }`}
               >
-                Card
+                <FiFilter /> 
+                فلاتر
+                {hasActiveFilters && (
+                  <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                )}
               </button>
-              <button
-                onClick={() => setViewMode('table')}
-                className={`p-2 rounded-lg ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'text-gray-300'}`}
-              >
-                Table
-              </button>
+              
+              <div className="flex bg-gray-100 rounded-xl p-1 border border-gray-300">
+                <button
+                  onClick={() => setViewMode('card')}
+                  className={`p-2 rounded-lg flex items-center gap-2 transition-all ${
+                    viewMode === 'card' 
+                      ? 'bg-blue-600 text-white shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  <FiImage size={16} />
+                  Card
+                </button>
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`p-2 rounded-lg flex items-center gap-2 transition-all ${
+                    viewMode === 'table' 
+                      ? 'bg-blue-600 text-white shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  <FiFileText size={16} />
+                  Table
+                </button>
+              </div>
+
+              <Link href="/teacher/courses/create">
+                <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center gap-2">
+                  <FiPlus />
+                  إنشاء كورس جديد
+                </button>
+              </Link>
             </div>
-            
-          
           </div>
         </div>
 
+        {/* Filters Section */}
         {showFilters && (
-          <div className="bg-gray-700 rounded-2xl p-6 mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">فلاتر البحث</h2>
-              <div className="flex gap-2">
+          <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-200">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-800">فلاتر البحث</h2>
+              <div className="flex gap-3">
                 {hasActiveFilters && (
                   <button 
                     onClick={resetFilters}
-                    className="text-sm text-gray-300 hover:text-white flex items-center"
+                    className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1 transition-colors"
                   >
-                    <FiX className="ml-1" /> إعادة الضبط
+                    <FiX size={16} />
+                    إعادة الضبط
                   </button>
                 )}
                 <button 
                   onClick={() => setShowFilters(false)}
-                  className="text-gray-400 hover:text-white"
+                  className="text-gray-500 hover:text-gray-700 transition-colors p-1"
                 >
                   <FiX size={20} />
                 </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div>
-                <label className="block text-sm font-medium mb-1">المرحلة الدراسية</label>
+                <label className="block text-sm font-medium mb-2 text-gray-700">المرحلة الدراسية</label>
                 <select
                   value={filters.stage}
                   onChange={(e) => handleFilterChange('stage', e.target.value)}
-                  className="w-full bg-gray-600 border border-gray-500 rounded-lg p-2"
+                  className="w-full bg-white border border-gray-300 rounded-xl p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 >
                   <option value="">جميع المراحل</option>
                   {stages.map(stage => (
@@ -596,11 +784,11 @@ export default function CoursesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">المادة</label>
+                <label className="block text-sm font-medium mb-2 text-gray-700">المادة</label>
                 <select
                   value={filters.subject}
                   onChange={(e) => handleFilterChange('subject', e.target.value)}
-                  className="w-full bg-gray-600 border border-gray-500 rounded-lg p-2"
+                  className="w-full bg-white border border-gray-300 rounded-xl p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 >
                   <option value="">جميع المواد</option>
                   {subjects.map(subject => (
@@ -610,11 +798,11 @@ export default function CoursesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">البلد</label>
+                <label className="block text-sm font-medium mb-2 text-gray-700">البلد</label>
                 <select
                   value={filters.country}
                   onChange={(e) => handleFilterChange('country', e.target.value)}
-                  className="w-full bg-gray-600 border border-gray-500 rounded-lg p-2"
+                  className="w-full bg-white border border-gray-300 rounded-xl p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 >
                   <option value="">جميع البلدان</option>
                   {countries.map(country => (
@@ -624,58 +812,58 @@ export default function CoursesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">نوع الكورس</label>
+                <label className="block text-sm font-medium mb-2 text-gray-700">نوع الكورس</label>
                 <select
                   value={filters.type}
                   onChange={(e) => handleFilterChange('type', e.target.value)}
-                  className="w-full bg-gray-600 border border-gray-500 rounded-lg p-2"
+                  className="w-full bg-white border border-gray-300 rounded-xl p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 >
                   <option value="">جميع الأنواع</option>
-                  <option value="free">مجاني</option>
-                  <option value="paid">مدفوع</option>
+                  <option value="online">اونلاين</option>
+                  <option value="recorded">مسجل</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">أقل سعر</label>
+                <label className="block text-sm font-medium mb-2 text-gray-700">أقل سعر</label>
                 <input
                   type="number"
                   value={filters.minPrice}
                   onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                  className="w-full bg-gray-600 border border-gray-500 rounded-lg p-2"
+                  className="w-full bg-white border border-gray-300 rounded-xl p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                   placeholder="0"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">أعلى سعر</label>
+                <label className="block text-sm font-medium mb-2 text-gray-700">أعلى سعر</label>
                 <input
                   type="number"
                   value={filters.maxPrice}
                   onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                  className="w-full bg-gray-600 border border-gray-500 rounded-lg p-2"
+                  className="w-full bg-white border border-gray-300 rounded-xl p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                   placeholder="أي سعر"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">أقل عدد مشتركين</label>
+                <label className="block text-sm font-medium mb-2 text-gray-700">أقل عدد مشتركين</label>
                 <input
                   type="number"
                   value={filters.minSubscribers}
                   onChange={(e) => handleFilterChange('minSubscribers', e.target.value)}
-                  className="w-full bg-gray-600 border border-gray-500 rounded-lg p-2"
+                  className="w-full bg-white border border-gray-300 rounded-xl p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                   placeholder="0"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">أعلى عدد مشتركين</label>
+                <label className="block text-sm font-medium mb-2 text-gray-700">أعلى عدد مشتركين</label>
                 <input
                   type="number"
                   value={filters.maxSubscribers}
                   onChange={(e) => handleFilterChange('maxSubscribers', e.target.value)}
-                  className="w-full bg-gray-600 border border-gray-500 rounded-lg p-2"
+                  className="w-full bg-white border border-gray-300 rounded-xl p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                   placeholder="أي عدد"
                 />
               </div>
@@ -683,66 +871,103 @@ export default function CoursesPage() {
           </div>
         )}
 
+        {/* Courses Content */}
         {filteredCourses.length === 0 ? (
-          <div className="bg-gray-700 rounded-2xl p-8 text-center">
-            <p className="text-gray-300">لا توجد كورسات </p>
+          <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-200">
+            <div className="max-w-md mx-auto">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FiBook size={40} className="text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">لا توجد كورسات</h3>
+              <p className="text-gray-600 mb-6">لم تقم بإنشاء أي كورسات بعد أو لا توجد كورسات تطابق معايير البحث</p>
+              <Link href="/teacher/courses/create">
+                <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center gap-2 mx-auto">
+                  <FiPlus />
+                  إنشاء كورس جديد
+                </button>
+              </Link>
+            </div>
           </div>
         ) : viewMode === 'card' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredCourses.map((course) => (
-              <div key={course.id} className="bg-gray-700 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
-                <img src={course.image} alt={course.title} className="w-full h-48 object-cover" />
-                
-                <div className="p-4">
-                  <h3 className="text-lg font-bold mb-2">{course.title}</h3>
-                  <p className="text-gray-300 text-sm mb-3 line-clamp-2">{course.description}</p>
-                  
-                  <div className="flex items-center justify-between mb-3">
-                    <span className={`px-2 py-1 rounded text-xs ${course.type === 'free' ? 'bg-green-600' : 'bg-blue-600'} text-white`}>
-                      {course.type === 'free' ? 'مجاني' : 'مدفوع'}
+              <div key={course.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-200">
+                <div className="relative">
+                  <img 
+                    src={course.image} 
+                    alt={course.title} 
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="absolute top-3 left-3">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      course.type === 'online' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {course.type === 'online' ? 'اونلاين' : 'مسجل'}
                     </span>
-                    <div className="flex items-center text-yellow-400">
+                  </div>
+                </div>
+                
+                <div className="p-5">
+                  <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-1">{course.title}</h3>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{course.description}</p>
+                  
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center text-yellow-600 font-semibold">
                       <FiDollarSign />
-                      <span className="ml-1">{course.price}</span>
+                      <span className="mr-1">{course.price}</span>
+                      {course.discount && (
+                        <span className="text-sm text-gray-500 line-through mr-2">{course.original_price}</span>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {course.discount}% خصم
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm text-gray-400 mb-3">
-                    <div className="flex items-center">
-                      <FiUsers className="ml-1" />
-                      <span>{course.subscribers_count}</span>
+                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                    <div className="flex items-center gap-1">
+                      <FiUsers />
+                      <span>{course.subscribers_count} مشترك</span>
                     </div>
-                    <div className="flex items-center">
-                      <FiEye className="ml-1" />
-                      <span>{course.views_count}</span>
+                    <div className="flex items-center gap-1">
+                      <FiEye />
+                      <span>{course.views_count} مشاهدة</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <img src={course.teacher.image} alt={course.teacher.name} className="w-8 h-8 rounded-full" />
-                    <span className="text-sm">{course.teacher.name}</span>
+                  <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                    <img 
+                      src={course.teacher.image} 
+                      alt={course.teacher.name} 
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                    <span className="text-sm font-medium text-gray-700">{course.teacher.name}</span>
                   </div>
 
-                  <div className="flex justify-between mt-4">
+                  <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
                     <button 
                       onClick={() => {
                         setEditingCourse(course)
                         setIsModalOpen(true)
                       }}
-                      className="bg-yellow-600 text-white p-2 rounded-lg"
-                      title="تعديل"
+                      className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-xl transition-colors flex items-center justify-center gap-1"
                     >
-                      <FiEdit />
+                      <FiEdit size={16} />
+                      <span className="text-sm">تعديل</span>
                     </button>
-                    <button className="bg-red-600 text-white p-2 rounded-lg" title="حذف">
-                      <FiTrash2 />
+                    <button 
+                      onClick={() => handleDeleteCourse(course.id)}
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white p-2 rounded-xl transition-colors flex items-center justify-center gap-1"
+                    >
+                      <FiTrash2 size={16} />
+                      <span className="text-sm">حذف</span>
                     </button>
-                    <Link href={`/teacher/courses/${course.id}`}>
-                      <button 
-                        className="bg-green-600 text-white p-2 rounded-lg" 
-                        title="عرض التفاصيل"
-                      >
-                        <FiEye />
+                    <Link href={`/teacher/courses/${course.id}`} className="flex-1">
+                      <button className="w-full bg-green-500 hover:bg-green-600 text-white p-2 rounded-xl transition-colors flex items-center justify-center gap-1">
+                        <FiEye size={16} />
+                        <span className="text-sm">عرض</span>
                       </button>
                     </Link>
                   </div>
@@ -751,88 +976,110 @@ export default function CoursesPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-gray-700 rounded-2xl overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-600">
-                <tr>
-                  <th className="p-4 text-center">الكورس</th>
-                  <th className="p-4 text-center">المعلم</th>
-                  <th className="p-4 text-center">المادة</th>
-                  <th className="p-4 text-center">المرحلة</th>
-                  <th className="p-4 text-center">السعر</th>
-                  <th className="p-4 text-center">المشتركين</th>
-                  <th className="p-4 text-center">المشاهدات</th>
-                  <th className="p-4 text-center">الإجراءات</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredCourses.map((course) => (
-                  <tr key={course.id} className="border-t text-center border-gray-600 hover:bg-gray-600">
-                    <td className="p-4">
-                      <div className="flex items-center">
-                        <div>
-                          <div className="font-semibold">{course.title}</div>
-                          <div className="text-sm text-gray-300">{course.type === 'online' ? 'online' : 'recorded'}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center">
-                        {course.teacher.name}
-                      </div>
-                    </td>
-                    <td className="p-4">{course.subject.name}</td>
-                    <td className="p-4">{course.stage?.name}</td>
-                    <td className="p-4">
-                      <div className="flex items-center text-yellow-400">
-                        <FiDollarSign />
-                        <span className="ml-1">{course.price}</span>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center">
-                        <FiUsers className="ml-1" />
-                        {course.subscribers_count}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center">
-                        <FiEye className="ml-1" />
-                        {course.views_count}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={() => {
-                            setEditingCourse(course)
-                            setIsModalOpen(true)
-                          }}
-                          className="bg-yellow-600 text-white p-2 rounded-lg"
-                          title="تعديل"
-                        >
-                          <FiEdit />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteCourse(course.id)}
-
-                        className="bg-red-600 text-white p-2 rounded-lg" title="حذف">
-                          <FiTrash2 />
-                        </button>
-                        <Link href={`/teacher/courses/${course.id}`}>
-                          <button 
-                            className="bg-green-600 text-white p-2 rounded-lg" 
-                            title="عرض التفاصيل"
-                          >
-                            <FiEye />
-                          </button>
-                        </Link>
-                      </div>
-                    </td>
+          <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-200">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="p-4 text-right text-sm font-semibold text-gray-700">الكورس</th>
+                    <th className="p-4 text-right text-sm font-semibold text-gray-700">المعلم</th>
+                    <th className="p-4 text-right text-sm font-semibold text-gray-700">المادة</th>
+                    <th className="p-4 text-right text-sm font-semibold text-gray-700">المرحلة</th>
+                    <th className="p-4 text-right text-sm font-semibold text-gray-700">السعر</th>
+                    <th className="p-4 text-right text-sm font-semibold text-gray-700">المشتركين</th>
+                    <th className="p-4 text-right text-sm font-semibold text-gray-700">المشاهدات</th>
+                    <th className="p-4 text-right text-sm font-semibold text-gray-700">الإجراءات</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredCourses.map((course) => (
+                    <tr key={course.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src={course.image} 
+                            alt={course.title}
+                            className="w-12 h-12 rounded-lg object-cover"
+                          />
+                          <div className="text-right">
+                            <div className="font-semibold text-gray-800">{course.title}</div>
+                            <div className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${
+                              course.type === 'online' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {course.type === 'online' ? 'اونلاين' : 'مسجل'}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2 justify-end">
+                          <span className="text-gray-700">{course.teacher.name}</span>
+                          <img 
+                            src={course.teacher.image} 
+                            alt={course.teacher.name}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        </div>
+                      </td>
+                      <td className="p-4 text-gray-700">{course.subject.name}</td>
+                      <td className="p-4 text-gray-700">{course.stage?.name}</td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-1 text-yellow-600 font-semibold justify-end">
+                          <span>{course.price}</span>
+                          <FiDollarSign />
+                          {course.discount && (
+                            <span className="text-sm text-gray-500 line-through mr-2">{course.original_price}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-1 text-gray-700 justify-end">
+                          <span>{course.subscribers_count}</span>
+                          <FiUsers />
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-1 text-gray-700 justify-end">
+                          <span>{course.views_count}</span>
+                          <FiEye />
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex gap-2 justify-end">
+                          <button 
+                            onClick={() => {
+                              setEditingCourse(course)
+                              setIsModalOpen(true)
+                            }}
+                            className="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-xl transition-colors"
+                            title="تعديل"
+                          >
+                            <FiEdit size={16} />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteCourse(course.id)}
+                            className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-xl transition-colors"
+                            title="حذف"
+                          >
+                            <FiTrash2 size={16} />
+                          </button>
+                          <Link href={`/teacher/courses/${course.id}`}>
+                            <button 
+                              className="bg-green-500 hover:bg-green-600 text-white p-2 rounded-xl transition-colors"
+                              title="عرض التفاصيل"
+                            >
+                              <FiEye size={16} />
+                            </button>
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -841,6 +1088,9 @@ export default function CoursesPage() {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onUpdate={updateCourse}
+          stages={stages}
+          subjects={subjects}
+          countries={countries}
         />
       </div>
     </Layout>

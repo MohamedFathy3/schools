@@ -10,8 +10,25 @@ interface Admin {
   id: number
   name: string
   email: string
+  role?: string
   created_at?: string
   updated_at?: string
+  phone?: string
+  national_id?: string
+  country_id?: number
+  stage_id?: number
+  subject_id?: number
+  account_holder_name?: string
+  account_number?: string
+  bank_name?: string
+  bank_branch?: string
+  image?: string
+  iban?: string
+  swift_code?: string
+  wallets_name?: string
+  wallets_number?: string
+  certificate_image?: string
+  experience_image?: string
 }
 
 interface LoginResponse {

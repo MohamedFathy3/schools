@@ -1,9 +1,7 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 'use client'
 import React, { useState, useEffect } from 'react'
 import { ToastContainer, toast } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
-import { FiSearch, FiEye, FiFilter, FiChevronDown, FiChevronUp, FiX } from 'react-icons/fi'
+import { FiSearch, FiEye, FiFilter, FiX, FiUsers, FiPlus, FiRefreshCw } from 'react-icons/fi'
 import Layout from '@/components/Layout'
 import { useRouter } from 'next/navigation'
 
@@ -27,7 +25,6 @@ export default function TeachersPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [lastPage, setLastPage] = useState(1)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [pageLoaded, setPageLoaded] = useState(false)
 
   const [filters, setFilters] = useState({
     name: '',
@@ -55,7 +52,7 @@ export default function TeachersPage() {
           },
           orderBy: filterParams.orderBy,
           orderByDirection: filterParams.orderByDirection,
-          perPage: 5,
+          perPage: 10,
           paginate: true,
           delete: false,
           page
@@ -66,10 +63,10 @@ export default function TeachersPage() {
         setTeachers(data.data || [])
         setCurrentPage(data.meta.current_page)
         setLastPage(data.meta.last_page)
-      } else toast.error('فشل في تحميل البيانات')
+      } else toast.error('Failed to load data')
     } catch (err) {
       console.error(err)
-      toast.error('حدث خطأ أثناء تحميل المعلمين')
+      toast.error('Error loading teachers')
     } finally {
       setIsLoading(false)
     }
@@ -77,18 +74,15 @@ export default function TeachersPage() {
 
   useEffect(() => {
     fetchTeachers()
-    // أنيميشن عند تحميل الصفحة
-    setTimeout(() => setPageLoaded(true), 100)
   }, [])
 
   const toggleActive = async (teacher: Teacher) => {
     const newActiveState = !teacher.active
     
-    // أنيميشن فوري للتغيير
     setTeachers(prev =>
       prev.map(t => 
         t.id === teacher.id 
-          ? { ...t, active: newActiveState, animating: true } 
+          ? { ...t, active: newActiveState } 
           : t
       )
     )
@@ -103,56 +97,37 @@ export default function TeachersPage() {
       const data = await res.json()
 
       if (res.ok && (data.success === undefined || data.success === true)) {
-        // إظهار toast مع أنيميشن
         toast.success(
-          <div className="flex items-center gap-3">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-              newActiveState 
-                ? 'bg-green-500 animate-pulse' 
-                : 'bg-gray-500 animate-pulse'
-            }`}>
-              {newActiveState ? '✓' : '✗'}
-            </div>
-            <span className="font-medium">
-              {newActiveState ? 'تم تفعيل الحساب بنجاح' : 'تم إلغاء تفعيل الحساب'}
-            </span>
-          </div>,
+          newActiveState ? 'Account activated successfully' : 'Account deactivated successfully',
           {
             position: "top-right",
             autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            className: 'animate-bounceIn'
+            className: 'bg-white text-gray-800 border border-gray-200 shadow-lg rounded-xl'
           }
         )
       } else {
-        // التراجع عن التغيير في حالة الخطأ
         setTeachers(prev =>
           prev.map(t => 
             t.id === teacher.id 
-              ? { ...t, active: teacher.active, animating: false } 
+              ? { ...t, active: teacher.active } 
               : t
           )
         )
-        toast.error(data.message || 'فشل في تعديل الحالة')
+        toast.error(data.message || 'Failed to update status')
       }
     } catch (err) {
       console.error(err)
-      // التراجع عن التغيير في حالة الخطأ
       setTeachers(prev =>
         prev.map(t => 
           t.id === teacher.id 
-            ? { ...t, active: teacher.active, animating: false } 
+            ? { ...t, active: teacher.active } 
             : t
         )
       )
-      toast.error('حدث خطأ أثناء تعديل الحالة')
+      toast.error('Error updating status')
     }
   }
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleFilterChange = (key: keyof typeof filters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }))
   }
@@ -179,427 +154,380 @@ export default function TeachersPage() {
 
   const hasActiveFilters = filters.name || filters.email || filters.phone || filters.active !== undefined
 
-  // Filter teachers based on search term
-  const filteredTeachers = teachers.filter(teacher => 
-    teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    teacher.phone.includes(searchTerm)
-  )
-
   return (
     <Layout>
-      <div className={`p-6 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 min-h-screen text-gray-900 dark:text-gray-100 transition-all duration-1000 ${
-        pageLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-      }`}>
-        <ToastContainer 
-          position="top-right" 
-          autoClose={3000} 
-          theme="dark"
-          toastClassName="rounded-xl animate-fadeInUp"
-          progressClassName="bg-gradient-to-r from-blue-500 to-purple-500"
-          bodyClassName="font-sans"
-          closeButton={false}
-        />
-        
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
-          <div className={`transform transition-all duration-700 delay-300 ${
-            pageLoaded ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'
-          }`}>
-            <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              قائمة المعلمين
-            </h1>
-            <p className="text-gray-500 dark:text-gray-400">
-              إجمالي المعلمين: <span className="font-semibold text-blue-600 dark:text-blue-400 animate-pulse">{teachers.length}</span>
-            </p>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
+        <div className="container mx-auto px-6 py-8">
+          <ToastContainer 
+            position="top-right" 
+            autoClose={3000} 
+            theme="light"
+            toastClassName="rounded-xl border border-gray-200 shadow-sm"
+            progressClassName="bg-blue-500"
+          />
           
-          <div className={`flex flex-col sm:flex-row gap-3 w-full lg:w-auto transition-all duration-700 delay-500 ${
-            pageLoaded ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'
-          }`}>
-            {/* Search */}
-            <div className="relative flex-grow max-w-md transform transition-all duration-300 hover:scale-105">
-              <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="ابحث بالاسم أو البريد أو الهاتف..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-200 p-3 rounded-xl w-full pl-12 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 shadow-md hover:shadow-lg"
-              />
-            </div>
-
-            {/* Filter Button */}
-            <button
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`px-4 py-3 rounded-xl flex items-center gap-2 transition-all duration-300 transform hover:scale-105 ${
-                isFilterOpen || hasActiveFilters
-                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                  : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-md hover:shadow-lg'
-              }`}
-            >
-              <FiFilter className={`transition-transform duration-300 ${isFilterOpen ? 'rotate-180' : ''}`} />
-              الفلترة
-              {hasActiveFilters && (
-                <span className="w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Filter Section */}
-        <div className={`transition-all duration-500 overflow-hidden ${
-          isFilterOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-        }`}>
-          <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200 dark:border-gray-700 transform transition-all duration-500 ${
-            isFilterOpen ? 'translate-y-0 opacity-100' : '-translate-y-5 opacity-0'
-          }`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Name Filter */}
-              <div className="transform transition-all duration-300 hover:scale-105">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  الاسم
-                </label>
-                <input
-                  type="text"
-                  placeholder="ابحث بالاسم..."
-                  value={filters.name}
-                  onChange={(e) => handleFilterChange('name', e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 shadow-sm"
-                />
+          {/* Enhanced Header */}
+          <div className="mb-8">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white rounded-2xl shadow-lg border border-blue-100">
+                  <FiUsers className="w-7 h-7 text-blue-600" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+                    Teachers Management
+                  </h1>
+                  <p className="text-gray-600 flex items-center gap-2">
+                    <span className="text-sm">Total Teachers:</span>
+                    <span className="font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full text-sm">
+                      {teachers.length}
+                    </span>
+                  </p>
+                </div>
               </div>
+              
+              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                {/* Enhanced Search */}
+                <div className="relative">
+                  <div className="relative">
+                    <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                      type="text"
+                      placeholder="Search teachers by name, email or phone..."
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      className="w-full lg:w-80 pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200"
+                    />
+                  </div>
+                </div>
 
-              {/* Email Filter */}
-              <div className="transform transition-all duration-300 hover:scale-105">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  البريد الإلكتروني
-                </label>
-                <input
-                  type="text"
-                  placeholder="ابحث بالبريد..."
-                  value={filters.email}
-                  onChange={(e) => handleFilterChange('email', e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 shadow-sm"
-                />
-              </div>
-
-              {/* Phone Filter */}
-              <div className="transform transition-all duration-300 hover:scale-105">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  الهاتف
-                </label>
-                <input
-                  type="text"
-                  placeholder="ابحث بالهاتف..."
-                  value={filters.phone}
-                  onChange={(e) => handleFilterChange('phone', e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 shadow-sm"
-                />
-              </div>
-
-              {/* Status Filter */}
-              <div className="transform transition-all duration-300 hover:scale-105">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  الحالة
-                </label>
-                <select
-                  value={filters.active === undefined ? '' : String(filters.active)}
-                  onChange={(e) => handleFilterChange('active', e.target.value === '' ? undefined : e.target.value === 'true')}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 shadow-sm"
-                >
-                  <option value="">جميع الحالات</option>
-                  <option value="true">نشط</option>
-                  <option value="false">غير نشط</option>
-                </select>
-              </div>
-
-              {/* Order By */}
-              <div className="transform transition-all duration-300 hover:scale-105">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  ترتيب حسب
-                </label>
-                <select
-                  value={filters.orderBy}
-                  onChange={(e) => handleFilterChange('orderBy', e.target.value as any)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 shadow-sm"
-                >
-                  <option value="id">الرقم التسلسلي</option>
-                  <option value="name">الاسم</option>
-                  <option value="email">البريد الإلكتروني</option>
-                </select>
-              </div>
-
-              {/* Order Direction */}
-              <div className="transform transition-all duration-300 hover:scale-105">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  اتجاه الترتيب
-                </label>
-                <select
-                  value={filters.orderByDirection}
-                  onChange={(e) => handleFilterChange('orderByDirection', e.target.value as any)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 shadow-sm"
-                >
-                  <option value="asc">تصاعدي (A-Z)</option>
-                  <option value="desc">تنازلي (Z-A)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Filter Actions */}
-            <div className="flex justify-end mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={clearFilters}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-300 transform hover:scale-105"
-              >
-                مسح الكل
-              </button>
-              <button
-                onClick={applyFilters}
-                className="ml-3 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
-              >
-                تطبيق الفلترة
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Active Filters Badges */}
-        {hasActiveFilters && (
-          <div className="flex flex-wrap gap-2 mb-6 animate-fadeIn">
-            {filters.name && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 transition-all duration-300 transform hover:scale-105">
-                الاسم: {filters.name}
-                <button
-                  onClick={() => handleFilterChange('name', '')}
-                  className="ml-1 hover:text-blue-600 transition-colors duration-200"
-                >
-                  <FiX size={14} />
-                </button>
-              </span>
-            )}
-            {filters.email && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 transition-all duration-300 transform hover:scale-105">
-                البريد: {filters.email}
-                <button
-                  onClick={() => handleFilterChange('email', '')}
-                  className="ml-1 hover:text-green-600 transition-colors duration-200"
-                >
-                  <FiX size={14} />
-                </button>
-              </span>
-            )}
-            {filters.phone && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 transition-all duration-300 transform hover:scale-105">
-                الهاتف: {filters.phone}
-                <button
-                  onClick={() => handleFilterChange('phone', '')}
-                  className="ml-1 hover:text-purple-600 transition-colors duration-200"
-                >
-                  <FiX size={14} />
-                </button>
-              </span>
-            )}
-            {filters.active !== undefined && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 transition-all duration-300 transform hover:scale-105">
-                الحالة: {filters.active ? 'نشط' : 'غير نشط'}
-                <button
-                  onClick={() => handleFilterChange('active', undefined)}
-                  className="ml-1 hover:text-orange-600 transition-colors duration-200"
-                >
-                  <FiX size={14} />
-                </button>
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Table */}
-        <div className={`overflow-x-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-1000 delay-700 ${
-          pageLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-        }`}>
-          <table className="min-w-full">
-            <thead className="bg-gradient-to-r from-blue-900 to-purple-900">
-              <tr>
-                <th className="px-6 py-4 text-center text-white font-medium transition-colors duration-300 hover:bg-blue-800">الاسم</th>
-                <th className="px-6 py-4 text-center text-white font-medium transition-colors duration-300 hover:bg-blue-800">البريد الإلكتروني</th>
-                <th className="px-6 py-4 text-center text-white font-medium transition-colors duration-300 hover:bg-blue-800">الهاتف</th>
-                <th className="px-6 py-4 text-center text-white font-medium transition-colors duration-300 hover:bg-blue-800">نشط</th>
-                <th className="px-6 py-4 text-center text-white font-medium transition-colors duration-300 hover:bg-blue-800">عرض التفاصيل</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={5} className="text-center p-8">
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                      <p className="text-gray-500 dark:text-gray-400">جاري تحميل البيانات...</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : filteredTeachers.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="text-center p-8">
-                    <div className="flex flex-col items-center justify-center animate-pulse">
-                      <FiSearch className="text-4xl text-gray-400 mb-4" />
-                      <p className="text-gray-500 dark:text-gray-400 text-lg">لا توجد بيانات</p>
-                      <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">جرب تغيير مصطلحات البحث أو الفلاتر</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                filteredTeachers.map((teacher, index) => (
-                  <tr 
-                    key={teacher.id} 
-                    className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-500 ${
-                      pageLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setIsFilterOpen(!isFilterOpen)}
+                    className={`px-5 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 font-medium ${
+                      isFilterOpen || hasActiveFilters
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm hover:shadow-md'
                     }`}
-                    style={{ transitionDelay: `${index * 100}ms` }}
                   >
-                    <td className="px-6 py-4 text-center font-medium text-gray-900 dark:text-white">
-                      {teacher.name}
-                    </td>
-                    <td className="px-6 py-4 text-center text-gray-600 dark:text-gray-400">
-                      {teacher.email}
-                    </td>
-                    <td className="px-6 py-4 text-center text-gray-600 dark:text-gray-400">
-                      {teacher.phone}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => toggleActive(teacher)}
-                        className={`relative inline-flex items-center h-6 w-12 rounded-full transition-all duration-500 focus:outline-none shadow-inner ${
-                          teacher.active 
-                            ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
-                            : 'bg-gradient-to-r from-gray-400 to-gray-500'
-                        } transform hover:scale-110 active:scale-95`}
-                      >
-                        <span
-                          className={`inline-block w-5 h-5 bg-white rounded-full shadow-lg transform transition-all duration-500 ${
-                            teacher.active 
-                              ? 'translate-x-6 ring-2 ring-green-200 animate-pulse' 
-                              : 'translate-x-0 ring-2 ring-gray-200'
-                          }`}
-                        />
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <button
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 mx-auto transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg group"
-                        onClick={() => router.push(`/dashboard/pandding_Teachers/${teacher.id}`)}
-                      >
-                        <FiEye className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12"/> 
-                        <span>عرض</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    <FiFilter className="w-4 h-4" />
+                    Filters
+                    {hasActiveFilters && (
+                      <span className="bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        !
+                      </span>
+                    )}
+                  </button>
 
-        {/* Pagination */}
-        {lastPage > 1 && (
-          <div className={`flex justify-center gap-3 mt-8 transition-all duration-1000 delay-1000 ${
-            pageLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-          }`}>
-            <button
-              disabled={currentPage === 1}
-              onClick={() => fetchTeachers(currentPage - 1)}
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg disabled:opacity-50 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 disabled:transform-none shadow-md disabled:shadow-none"
-            >
-              السابق
-            </button>
-            <span className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-inner">
-              {currentPage} / {lastPage}
-            </span>
-            <button
-              disabled={currentPage === lastPage}
-              onClick={() => fetchTeachers(currentPage + 1)}
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg disabled:opacity-50 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 disabled:transform-none shadow-md disabled:shadow-none"
-            >
-              التالي
-            </button>
+                  <button
+                    onClick={() => fetchTeachers()}
+                    disabled={isLoading}
+                    className="px-5 py-3 bg-white border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-200 flex items-center gap-2 font-medium shadow-sm hover:shadow-md disabled:opacity-50"
+                  >
+                    <FiRefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </button>
+
+               
+                </div>
+              </div>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Active Teachers</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {teachers.filter(t => t.active).length}
+                    </p>
+                  </div>
+                  <div className="p-2 bg-green-50 rounded-lg">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Inactive Teachers</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {teachers.filter(t => !t.active).length}
+                    </p>
+                  </div>
+                  <div className="p-2 bg-red-50 rounded-lg">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Total Pages</p>
+                    <p className="text-2xl font-bold text-gray-900">{lastPage}</p>
+                  </div>
+                  <div className="p-2 bg-blue-50 rounded-lg">
+                    <FiUsers className="w-4 h-4 text-blue-600" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Current Page</p>
+                    <p className="text-2xl font-bold text-gray-900">{currentPage}</p>
+                  </div>
+                  <div className="p-2 bg-purple-50 rounded-lg">
+                    <span className="text-sm font-bold text-purple-600">PG</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* Add custom animations to global CSS */}
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translate3d(0, 40px, 0);
-          }
-          to {
-            opacity: 1;
-            transform: translate3d(0, 0, 0);
-          }
-        }
-        
-        @keyframes bounceIn {
-          from, 20%, 40%, 60%, 80%, to {
-            animation-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
-          }
-          0% {
-            opacity: 0;
-            transform: scale3d(.3, .3, .3);
-          }
-          20% {
-            transform: scale3d(1.1, 1.1, 1.1);
-          }
-          40% {
-            transform: scale3d(.9, .9, .9);
-          }
-          60% {
-            opacity: 1;
-            transform: scale3d(1.03, 1.03, 1.03);
-          }
-          80% {
-            transform: scale3d(.97, .97, .97);
-          }
-          to {
-            opacity: 1;
-            transform: scale3d(1, 1, 1);
-          }
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 0.5s ease-out;
-        }
-        
-        .animate-fadeInUp {
-          animation: fadeInUp 0.6s ease-out;
-        }
-        
-        .animate-bounceIn {
-          animation: bounceIn 0.8s ease-out;
-        }
-        
-        /* Toast custom styles */
-        .Toastify__toast--success {
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-          border-radius: 16px;
-          box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
-        }
-        
-        .Toastify__toast--error {
-          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-          border-radius: 16px;
-          box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
-        }
-        
-        .Toastify__progress-bar {
-          height: 4px;
-          border-radius: 2px;
-        }
-      `}</style>
+          {/* Enhanced Filter Section */}
+          <div className={`transition-all duration-500 overflow-hidden ${
+            isFilterOpen ? 'max-h-96 opacity-100 mb-6' : 'max-h-0 opacity-0 mb-0'
+          }`}>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Advanced Filters</h3>
+                <button
+                  onClick={() => setIsFilterOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <FiX className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Search by name..."
+                    value={filters.name}
+                    onChange={(e) => handleFilterChange('name', e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Search by email..."
+                    value={filters.email}
+                    onChange={(e) => handleFilterChange('email', e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Search by phone..."
+                    value={filters.phone}
+                    onChange={(e) => handleFilterChange('phone', e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status
+                  </label>
+                  <select
+                    value={filters.active === undefined ? '' : String(filters.active)}
+                    onChange={(e) => handleFilterChange('active', e.target.value === '' ? undefined : e.target.value === 'true')}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  >
+                    <option value="">All Status</option>
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Filter Actions */}
+              <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+                <button
+                  onClick={clearFilters}
+                  className="px-6 py-3 text-gray-600 hover:text-gray-800 transition-colors duration-200 font-medium"
+                >
+                  Clear All
+                </button>
+                <button
+                  onClick={applyFilters}
+                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg shadow-blue-500/25"
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Enhanced Table */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
+                  <tr>
+                    <th className="px-6 py-5 text-left text-blue-800 font-bold text-sm uppercase tracking-wider">Teacher Name</th>
+                    <th className="px-6 py-5 text-left text-blue-800 font-bold text-sm uppercase tracking-wider">Email Address</th>
+                    <th className="px-6 py-5 text-left text-blue-800 font-bold text-sm uppercase tracking-wider">Phone Number</th>
+                    <th className="px-6 py-5 text-center text-blue-800 font-bold text-sm uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-5 text-center text-blue-800 font-bold text-sm uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={5} className="text-center p-12">
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                          <p className="text-gray-500 text-lg">Loading teachers data...</p>
+                          <p className="text-gray-400 text-sm mt-1">Please wait a moment</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : teachers.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="text-center p-12">
+                        <div className="flex flex-col items-center justify-center">
+                          <FiUsers className="text-4xl text-gray-300 mb-4" />
+                          <p className="text-gray-500 text-lg mb-2">No teachers found</p>
+                          <p className="text-gray-400 text-sm">Try adjusting your search or filters</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    teachers.map((teacher) => (
+                      <tr key={teacher.id} className="hover:bg-blue-50/50 transition-all duration-200 group">
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                              {teacher.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="font-semibold text-gray-900 text-lg">{teacher.name}</div>
+                              <div className="text-sm text-gray-500">ID: {teacher.id}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="text-gray-700 font-medium">{teacher.email}</div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="text-gray-700 font-mono bg-gray-50 px-3 py-1 rounded-lg inline-block">
+                            {teacher.phone}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center justify-center gap-3">
+                            <button
+                              onClick={() => toggleActive(teacher)}
+                              className={`relative inline-flex items-center h-7 w-14 rounded-full transition-all duration-300 focus:outline-none shadow-inner ${
+                                teacher.active 
+                                  ? 'bg-green-500 shadow-green-200' 
+                                  : 'bg-gray-300 shadow-gray-200'
+                              }`}
+                            >
+                              <span
+                                className={`inline-block w-5 h-5 bg-white rounded-full shadow-lg transform transition-all duration-300 ${
+                                  teacher.active 
+                                    ? 'translate-x-8' 
+                                    : 'translate-x-1'
+                                }`}
+                              />
+                            </button>
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                              teacher.active 
+                                ? 'bg-green-100 text-green-800 border border-green-200' 
+                                : 'bg-red-100 text-red-800 border border-red-200'
+                            }`}>
+                              {teacher.active ? 'ACTIVE' : 'INACTIVE'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 transition-all duration-200 shadow-lg shadow-blue-500/25 hover:shadow-xl font-medium group"
+                              onClick={() => router.push(`/dashboard/pandding_Teachers/${teacher.id}`)}
+                            >
+                              <FiEye className="w-4 h-4 group-hover:scale-110 transition-transform" /> 
+                              <span>View Details</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Enhanced Pagination */}
+          {lastPage > 1 && (
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-8">
+              <p className="text-gray-600 text-sm">
+                Showing page {currentPage} of {lastPage} • {teachers.length} teachers
+              </p>
+              <div className="flex gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => fetchTeachers(currentPage - 1)}
+                  className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl disabled:opacity-50 hover:bg-gray-50 transition-all duration-200 flex items-center gap-2 font-medium shadow-sm hover:shadow-md disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, lastPage) }, (_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => fetchTeachers(pageNum)}
+                        className={`w-10 h-10 rounded-lg transition-all duration-200 font-medium ${
+                          currentPage === pageNum
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                  {lastPage > 5 && (
+                    <span className="px-2 text-gray-500">...</span>
+                  )}
+                </div>
+                <button
+                  disabled={currentPage === lastPage}
+                  onClick={() => fetchTeachers(currentPage + 1)}
+                  className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl disabled:opacity-50 hover:bg-gray-50 transition-all duration-200 flex items-center gap-2 font-medium shadow-sm hover:shadow-md disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </Layout>
   )
 }

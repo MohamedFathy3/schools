@@ -12,14 +12,17 @@ const ThemeContext = createContext<ThemeContextType>({
 })
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [theme, setTheme] = useState('light')
+  const [theme, setTheme] = useState('light') // دايماً light
 
   useEffect(() => {
-    if(theme === 'dark') document.documentElement.classList.add('dark')
-    else document.documentElement.classList.remove('dark')
+    // تأكد أن الـ dark class مش موجود
+    document.documentElement.classList.remove('dark')
   }, [theme])
 
-  const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light')
+  const toggleTheme = () => {
+    // ما تعملش حاجة - دايماً light
+    // أو ممكن تمسح الدالة دي خالص
+  }
 
   return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>
 }
