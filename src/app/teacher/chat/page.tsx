@@ -26,11 +26,11 @@ const ChatPage: React.FC<ChatProps> = ({ teacherId, adminId }) => {
   const [sending, setSending] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const API_URL = '/api'; // بدل ما تستخدم https://back.professionalacademyedu.com/api مباشرة
+  const API_URL = '/api';
 
   const token = Cookies.get('teacher_token');
   const currentTeacherId = teacherId || parseInt(Cookies.get('teacher_id') || '0', 10);
-  const currentAdminId = parseInt(String(adminId), 10); // تحويل adminId إلى رقم صحيح
+  const currentAdminId = parseInt(String(adminId), 10);
 
   const fetchMessages = async () => {
     console.log('Fetching messages...');
@@ -75,7 +75,7 @@ const ChatPage: React.FC<ChatProps> = ({ teacherId, adminId }) => {
     }
 
     const payload = {
-      receiver_id: currentAdminId, // استخدم الرقم هنا أيضاً
+      receiver_id: currentAdminId,
       receiver_type: 'admin',
       body: newMessage.trim(),
     };
@@ -131,58 +131,95 @@ const ChatPage: React.FC<ChatProps> = ({ teacherId, adminId }) => {
 
   return (
     <Layout>
-      <div className="max-w-3xl mx-auto h-[90vh] flex flex-col border border-gray-700 rounded-md shadow-md overflow-hidden bg-[#1e1e1e] text-white">
+      <div className="max-w-3xl mx-auto h-[90vh] flex flex-col rounded-2xl shadow-xl overflow-hidden bg-white border border-gray-200">
         {/* Header */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-700 bg-[#2a2a2a]">
-          <img
-            src="/images/admin-avatar.png"
-            alt="Admin"
-            className="w-10 h-10 rounded-full border border-gray-600"
-          />
-          <div>
-            <h2 className="text-lg font-bold text-white">المدير</h2>
-            <span className="text-sm text-green-400">متصل الآن</span>
+        <div className="flex items-center gap-4 px-6 py-4 border-b border-gray-100 bg-white">
+          <div className="relative">
+            <img
+              src="/images/admin-avatar.png"
+              alt="Admin"
+              className="w-12 h-12 rounded-full border-2 border-gray-100 shadow-sm"
+            />
+            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-gray-800">المدير</h2>
+            <span className="text-sm text-green-600 font-medium">متصل الآن</span>
+          </div>
+          <div className="flex space-x-2">
+            <button className="p-2 rounded-full hover:bg-gray-50 transition-colors border border-gray-200">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+            </button>
+            <button className="p-2 rounded-full hover:bg-gray-50 transition-colors border border-gray-200">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
           </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#1e1e1e]">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
           {loadingMessages ? (
-            <div className="text-center text-gray-400">جاري تحميل الرسائل...</div>
+            <div className="flex justify-center items-center h-20">
+              <div className="flex space-x-2">
+                <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
+                <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
+              </div>
+              <span className="ml-2 text-gray-500">جاري تحميل الرسائل...</span>
+            </div>
           ) : messages.length === 0 ? (
-            <div className="text-center text-gray-500">لا توجد رسائل بعد</div>
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-600">لا توجد رسائل بعد</h3>
+              <p className="text-gray-500 mt-1">ابدأ محادثة جديدة مع المدير</p>
+            </div>
           ) : (
             messages.map((msg) => {
               const isMine = msg.sender_type === 'teacher';
               return (
                 <div
                   key={msg.id}
-                  className={`flex items-end gap-2 ${isMine ? 'justify-end' : 'justify-start'}`}
+                  className={`flex items-start gap-3 ${isMine ? 'justify-end' : 'justify-start'}`}
                 >
                   {!isMine && (
                     <img
                       src={msg.sender_avatar_url || '/images/admin-avatar.png'}
                       alt={msg.sender_name}
-                      className="w-8 h-8 rounded-full"
+                      className="w-10 h-10 rounded-full flex-shrink-0 border border-gray-200"
                     />
                   )}
-                  <div className="max-w-[70%]">
+                  <div className={`max-w-[75%] ${isMine ? 'order-first' : ''}`}>
                     {!isMine && (
-                      <div className="text-xs text-gray-400 mb-1">{msg.sender_name}</div>
+                      <div className="text-sm text-gray-600 mb-1 font-medium">{msg.sender_name}</div>
                     )}
                     <div
-                      className={`px-4 py-2 rounded-xl text-sm leading-6 ${
+                      className={`px-4 py-3 rounded-2xl text-sm leading-6 shadow-sm ${
                         isMine
-                          ? 'bg-blue-600 text-white rounded-br-none'
-                          : 'bg-gray-700 text-gray-200 rounded-bl-none'
+                          ? 'bg-blue-500 text-white rounded-br-none'
+                          : 'bg-gray-50 text-gray-800 rounded-bl-none border border-gray-100'
                       }`}
                     >
                       {msg.body}
                     </div>
-                    <div className="text-[10px] text-gray-400 mt-1 text-right">
+                    <div className={`text-xs text-gray-400 mt-1 ${isMine ? 'text-right' : 'text-left'}`}>
                       {formatTime(msg.created_at)}
                     </div>
                   </div>
+                  {isMine && (
+                    <img
+                      src="/images/user.png"
+                      alt="أنا"
+                      className="w-10 h-10 rounded-full flex-shrink-0 border border-gray-200"
+                    />
+                  )}
                 </div>
               );
             })
@@ -191,24 +228,43 @@ const ChatPage: React.FC<ChatProps> = ({ teacherId, adminId }) => {
         </div>
 
         {/* Input */}
-        <div className="flex border-t border-gray-700 px-4 py-3 gap-2 bg-[#2a2a2a]">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') sendMessage();
-            }}
-            placeholder="اكتب رسالة..."
-            className="flex-1 bg-[#1e1e1e] border border-gray-600 text-white rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={sending}
-          />
+        <div className="flex items-center px-6 py-4 gap-3 bg-white border-t border-gray-100">
+          <button className="p-3 rounded-full hover:bg-gray-50 transition-colors border border-gray-200">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+            </svg>
+          </button>
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  sendMessage();
+                }
+              }}
+              placeholder="اكتب رسالة..."
+              className="w-full bg-gray-50 border-0 text-gray-800 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all border border-gray-200"
+              disabled={sending}
+            />
+          </div>
           <button
             onClick={sendMessage}
             disabled={sending || !newMessage.trim()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm disabled:opacity-50"
+            className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            إرسال
+            {sending ? (
+              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            )}
           </button>
         </div>
       </div>

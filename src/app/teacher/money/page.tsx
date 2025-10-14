@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { FiArrowLeft, FiDollarSign, FiFileText, FiSend, FiCheckCircle, FiUsers, FiBook, FiClock, FiAlertCircle, FiRefreshCw, FiCreditCard, FiSmartphone, FiMail } from 'react-icons/fi'
+import { FiArrowLeft, FiDollarSign, FiFileText, FiSend, FiCheckCircle, FiUsers, FiBook, FiClock, FiAlertCircle, FiRefreshCw, FiCreditCard, FiSmartphone, FiMail, FiGift } from 'react-icons/fi'
 import { ToastContainer, toast } from 'react-toastify'
 import Cookies from 'js-cookie'
 import Layoutteacher from '@/components/Layoutteacher'
@@ -10,6 +10,7 @@ interface WithdrawRequest {
   amount: number
   note: string
   transfer_type: 'bank' | 'wallet' | 'postal'
+  withdraw_from: 'income' | 'rewards'
 }
 
 interface TeacherData {
@@ -20,17 +21,18 @@ interface TeacherData {
   courses_count: number
   students_count: number
   total_income: number
+  rewards?: string
   account_holder_name?: string
   account_number?: string
   iban?: string
   wallets_number?: string
-  rewards?: string
 }
 
 interface TeacherBalance {
   total_income: number
   net_income: number
   commission_amount: number
+  rewards_amount: number
   courses_count: number
   students_count: number
 }
@@ -41,6 +43,7 @@ interface WithdrawItem {
   status: string
   comment: string | null
   created_at: string
+  withdraw_from?: string
   teacher: {
     id: number
     name: string
@@ -52,7 +55,8 @@ export default function WithdrawPage() {
   const [formData, setFormData] = useState<WithdrawRequest>({
     amount: 0,
     note: '',
-    transfer_type: 'bank'
+    transfer_type: 'bank',
+    withdraw_from: 'income'
   })
   const [amountInput, setAmountInput] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -64,28 +68,42 @@ export default function WithdrawPage() {
   const router = useRouter()
   const API_URL = '/api'
 
-  // حساب صافي الربح والعمولة
-  const calculateNetIncome = (teacher: TeacherData): TeacherBalance => {
+  // حساب صافي الربح والعمولة والجوائز
+  const calculateBalance = (teacher: TeacherData): TeacherBalance => {
     const totalIncome = teacher.total_income || 0
     const commissionRate = parseFloat(teacher.commission) / 100
     const commissionAmount = totalIncome * commissionRate
     const netIncome = totalIncome - commissionAmount
+    
+    // تحويل الجوائز من نص إلى رقم
+    const rewardsAmount = parseFloat(teacher.rewards || '0') || 0
 
     return {
       total_income: totalIncome,
       net_income: netIncome,
       commission_amount: commissionAmount,
+      rewards_amount: rewardsAmount,
       courses_count: teacher.courses_count || 0,
       students_count: teacher.students_count || 0
     }
   }
 
-  const balance = teacherData ? calculateNetIncome(teacherData) : {
+  const balance = teacherData ? calculateBalance(teacherData) : {
     total_income: 0,
     net_income: 0,
     commission_amount: 0,
+    rewards_amount: 0,
     courses_count: 0,
     students_count: 0
+  }
+
+  // الحصول على الرصيد المتاح بناءً على مصدر السحب المختار
+  const getAvailableAmount = () => {
+    if (formData.withdraw_from === 'income') {
+      return balance.net_income
+    } else {
+      return balance.rewards_amount
+    }
   }
 
   const getToken = () => {
@@ -148,7 +166,6 @@ export default function WithdrawPage() {
       const data = await res.json()
       console.log('Withdraw requests response:', data)
       
-      // معالجة مختلف أشكال الرد
       if (data.status === 200 && data.data) {
         setRecentRequests(data.data)
       } else if (data.data && Array.isArray(data.data)) {
@@ -158,13 +175,10 @@ export default function WithdrawPage() {
       } else if (data.requests) {
         setRecentRequests(data.requests)
       } else {
-        console.log('No withdraw requests data found:', data)
         setRecentRequests([])
-        // لا تعرض رسالة خطأ إذا كانت البيانات فارغة
       }
     } catch (error) {
       console.error('Error fetching recent requests:', error)
-      // لا تعرض toast error هنا علشان ميظهرش رسالة حمراء لما مفيش بيانات
     } finally {
       setIsLoadingRequests(false)
     }
@@ -208,6 +222,15 @@ export default function WithdrawPage() {
     }))
   }
 
+  const handleWithdrawFromChange = (source: 'income' | 'rewards') => {
+    setFormData(prev => ({
+      ...prev,
+      withdraw_from: source,
+      amount: 0
+    }))
+    setAmountInput('')
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -222,7 +245,8 @@ export default function WithdrawPage() {
       return
     }
 
-    if (formData.amount > balance.net_income) {
+    const availableAmount = getAvailableAmount()
+    if (formData.amount > availableAmount) {
       toast.error('المبلغ المطلوب أكبر من الرصيد المتاح')
       return
     }
@@ -246,17 +270,23 @@ export default function WithdrawPage() {
         return
       }
 
+      // إعداد البيانات للإرسال
+      const requestData = {
+        amount: formData.amount,
+        note: formData.note,
+        transfer_type: formData.transfer_type,
+        withdraw_from: formData.withdraw_from
+      }
+
+      console.log('Sending withdraw request:', requestData)
+
       const res = await fetch(`${API_URL}/withdraw-request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          amount: formData.amount,
-          note: formData.note,
-          transfer_type: formData.transfer_type
-        })
+        body: JSON.stringify(requestData)
       })
 
       const data = await res.json()
@@ -271,6 +301,7 @@ export default function WithdrawPage() {
           amount: formData.amount.toString(),
           status: 'pending',
           comment: formData.note,
+          withdraw_from: formData.withdraw_from,
           created_at: new Date().toISOString(),
           teacher: {
             id: teacherData.id,
@@ -280,7 +311,12 @@ export default function WithdrawPage() {
         }
         
         setRecentRequests(prev => [newRequest, ...prev])
-        setFormData({ amount: 0, note: '', transfer_type: 'bank' })
+        setFormData({ 
+          amount: 0, 
+          note: '', 
+          transfer_type: 'bank',
+          withdraw_from: 'income'
+        })
         setAmountInput('')
         
         // تحديث بيانات المعلم
@@ -367,6 +403,14 @@ export default function WithdrawPage() {
     }
   }
 
+  const getWithdrawFromText = (source?: string) => {
+    switch (source) {
+      case 'income': return 'من الأرباح'
+      case 'rewards': return 'من الجوائز'
+      default: return 'من الأرباح'
+    }
+  }
+
   if (loading) {
     return (
       <Layoutteacher>
@@ -427,6 +471,7 @@ export default function WithdrawPage() {
 
           {/* بطاقات الإحصائيات */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
+            {/* صافي الربح المتاح */}
             <div className="bg-white rounded-2xl p-4 md:p-6 border border-gray-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
@@ -440,6 +485,21 @@ export default function WithdrawPage() {
               </div>
             </div>
 
+            {/* الجوائز */}
+            <div className="bg-white rounded-2xl p-4 md:p-6 border border-gray-200 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm">الجوائز والمكافآت</p>
+                  <p className="text-xl md:text-2xl font-bold mt-1 md:mt-2 text-purple-600">
+                    {formatCurrency(balance.rewards_amount)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">مكافآت الأداء</p>
+                </div>
+                <FiGift className="text-2xl md:text-3xl text-purple-500" />
+              </div>
+            </div>
+
+            {/* إجمالي الأرباح */}
             <div className="bg-white rounded-2xl p-4 md:p-6 border border-gray-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
@@ -453,6 +513,7 @@ export default function WithdrawPage() {
               </div>
             </div>
 
+            {/* العمولة */}
             <div className="bg-white rounded-2xl p-4 md:p-6 border border-gray-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
@@ -465,18 +526,6 @@ export default function WithdrawPage() {
                 <FiUsers className="text-2xl md:text-3xl text-orange-500" />
               </div>
             </div>
-
-            <div className="bg-white rounded-2xl p-4 md:p-6 border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm">عدد الكورسات</p>
-                  <p className="text-xl md:text-2xl font-bold mt-1 md:mt-2 text-purple-600">
-                    {balance.courses_count}
-                  </p>
-                </div>
-                <FiBook className="text-2xl md:text-3xl text-purple-500" />
-              </div>
-            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
@@ -485,6 +534,39 @@ export default function WithdrawPage() {
               <h2 className="text-lg md:text-xl font-semibold mb-4 md:mb-6 text-gray-800">طلب سحب جديد</h2>
               
               <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+                {/* مصدر السحب */}
+                <div>
+                  <label className="block text-sm font-semibold mb-3 text-gray-700">مصدر السحب *</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleWithdrawFromChange('income')}
+                      className={`p-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center justify-center ${
+                        formData.withdraw_from === 'income' 
+                          ? 'border-green-500 bg-green-50 text-green-700' 
+                          : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      <FiDollarSign className="text-lg mb-1" />
+                      <span className="text-xs font-medium">من الأرباح</span>
+                      <span className="text-xs mt-1">{formatCurrency(balance.net_income)}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleWithdrawFromChange('rewards')}
+                      className={`p-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center justify-center ${
+                        formData.withdraw_from === 'rewards' 
+                          ? 'border-purple-500 bg-purple-50 text-purple-700' 
+                          : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      <FiGift className="text-lg mb-1" />
+                      <span className="text-xs font-medium">من الجوائز</span>
+                      <span className="text-xs mt-1">{formatCurrency(balance.rewards_amount)}</span>
+                    </button>
+                  </div>
+                </div>
+
                 {/* طريقة السحب */}
                 <div>
                   <label className="block text-sm font-semibold mb-3 text-gray-700">طريقة السحب *</label>
@@ -511,6 +593,7 @@ export default function WithdrawPage() {
                   </div>
                 </div>
 
+                {/* المبلغ */}
                 <div>
                   <label className="block text-sm font-semibold mb-2 text-gray-700">المبلغ المطلوب *</label>
                   <div className="relative">
@@ -522,14 +605,15 @@ export default function WithdrawPage() {
                       onChange={handleAmountChange}
                       required
                       className="w-full pr-10 pl-3 py-3 rounded-xl bg-gray-50 text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      placeholder="أدخل المبلغ المطلوب (مثال: 150.50)"
+                      placeholder={`أدخل المبلغ المطلوب (الحد الأدنى: 50 جنيه)`}
                     />
                   </div>
                   <p className="text-sm text-gray-500 mt-2">
-                    الحد الأدنى: 50 جنيه | المتاح: {formatCurrency(balance.net_income)}
+                    المتاح: {formatCurrency(getAvailableAmount())} | {getWithdrawFromText(formData.withdraw_from)}
                   </p>
                 </div>
 
+                {/* الملاحظات */}
                 <div>
                   <label className="block text-sm font-semibold mb-2 text-gray-700">ملاحظات *</label>
                   <textarea
@@ -543,9 +627,10 @@ export default function WithdrawPage() {
                   />
                 </div>
 
+                {/* زر الإرسال */}
                 <button
                   type="submit"
-                  disabled={isSubmitting || balance.net_income < 50}
+                  disabled={isSubmitting || getAvailableAmount() < 50}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
                   {isSubmitting ? (
@@ -556,7 +641,7 @@ export default function WithdrawPage() {
                   ) : (
                     <>
                       <FiSend className="ml-2" />
-                      إرسال طلب السحب
+                      إرسال طلب السحب {getWithdrawFromText(formData.withdraw_from)}
                     </>
                   )}
                 </button>
@@ -598,8 +683,14 @@ export default function WithdrawPage() {
                             {formatCurrency(parseFloat(request.amount))}
                           </span>
                           <div className="flex items-center mt-1 text-sm text-gray-600">
-                            {getTransferTypeIcon(formData.transfer_type)}
-                            <span className="mr-1">{getTransferTypeText(formData.transfer_type)}</span>
+                            {request.withdraw_from === 'rewards' ? (
+                              <FiGift className="ml-2 text-purple-500" />
+                            ) : (
+                              <FiDollarSign className="ml-2 text-green-500" />
+                            )}
+                            <span className="mr-1">{getWithdrawFromText(request.withdraw_from)}</span>
+                            <FiCreditCard className="ml-3 mr-1" />
+                            <span>{getTransferTypeText(formData.transfer_type)}</span>
                           </div>
                         </div>
                         <span className={`text-xs px-3 py-1 rounded-full ${getStatusColor(request.status)} flex items-center font-medium`}>
@@ -664,7 +755,7 @@ export default function WithdrawPage() {
                 </div>
                 <div className="flex items-start">
                   <FiCheckCircle className="text-green-500 mt-0.5 ml-2 flex-shrink-0" />
-                  <span>يتم معالجة الطلبات خلال 3-5 أيام عمل</span>
+                  <span>يمكن السحب من الأرباح أو الجوائز</span>
                 </div>
               </div>
               <div className="space-y-2 md:space-y-3">
@@ -674,7 +765,7 @@ export default function WithdrawPage() {
                 </div>
                 <div className="flex items-start">
                   <FiCheckCircle className="text-green-500 mt-0.5 ml-2 flex-shrink-0" />
-                  <span>للاستفسارات، يرجى التواصل مع الدعم الفني</span>
+                  <span>يتم معالجة الطلبات خلال 3-5 أيام عمل</span>
                 </div>
               </div>
             </div>

@@ -25,27 +25,22 @@ export default function MessagesPage() {
   const [expandedMessage, setExpandedMessage] = useState<number | null>(null);
   const API_URL = '/api';
 
-
-
   const redmassafe = async (id: number) => {
-  try {
-    
-    const response = await fetch(`${API_URL}/admin/messages/${id}/read`, {
-  
-    });
-    const data: ApiResponse = await response.json();
+    try {
+      const response = await fetch(`${API_URL}/admin/messages/${id}/read`, {});
+      const data: ApiResponse = await response.json();
 
-    if (response.ok && data.result === "Success") {
-      
-    } else {
-      console.error('Failed to fetch messages');
+      if (response.ok && data.result === "Success") {
+        // Success handling if needed
+      } else {
+        console.error('Failed to fetch messages');
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error('Error fetching messages:', error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   // جلب الرسائل من الـ API
   const fetchMessages = async () => {
@@ -103,73 +98,70 @@ export default function MessagesPage() {
     });
   };
 
- 
-
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-white p-6">
         {/* Header */}
         <div className="max-w-6xl mx-auto animate-fadeIn">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-4 mb-4">
-              <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/25">
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                 <FiMessageSquare className="text-white text-2xl" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold text-white mb-2">
+                <h1 className="text-4xl font-bold text-gray-800 mb-2">
                   الرسائل المرسلة
                 </h1>
-              
               </div>
             </div>
           </div>
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-purple-500/50 transition-all duration-300 animate-slideUp">
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:border-blue-500/50 transition-all duration-300 animate-slideUp shadow-sm hover:shadow-md">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">إجمالي الرسائل</p>
-                  <p className="text-3xl font-bold text-white mt-2">{messages.length}</p>
+                  <p className="text-gray-600 text-sm">إجمالي الرسائل</p>
+                  <p className="text-3xl font-bold text-gray-800 mt-2">{messages.length}</p>
                 </div>
-                <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                  <FiMessageSquare className="text-purple-400 text-xl" />
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <FiMessageSquare className="text-blue-600 text-xl" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-blue-500/50 transition-all duration-300 animate-slideUp" style={{animationDelay: '0.1s'}}>
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:border-green-500/50 transition-all duration-300 animate-slideUp shadow-sm hover:shadow-md" style={{animationDelay: '0.1s'}}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">آخر رسالة</p>
-                  <p className="text-white mt-2">
+                  <p className="text-gray-600 text-sm">آخر رسالة</p>
+                  <p className="text-gray-800 mt-2 font-medium">
                     {messages.length > 0 ? formatDate(messages[0].created_at) : 'لا توجد'}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                  <FiCalendar className="text-blue-400 text-xl" />
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                  <FiCalendar className="text-green-600 text-xl" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-green-500/50 transition-all duration-300 animate-slideUp" style={{animationDelay: '0.2s'}}>
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:border-purple-500/50 transition-all duration-300 animate-slideUp shadow-sm hover:shadow-md" style={{animationDelay: '0.2s'}}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">تم التحديث</p>
-                  <p className="text-white mt-2">الآن</p>
+                  <p className="text-gray-600 text-sm">تم التحديث</p>
+                  <p className="text-gray-800 mt-2 font-medium">الآن</p>
                 </div>
                 <button 
                   onClick={fetchMessages}
-                  className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center hover:bg-green-500/30 transition-all duration-300 hover:scale-110"
+                  className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center hover:bg-purple-200 transition-all duration-300 hover:scale-110"
                 >
-                  <FiRefreshCw className="text-green-400 text-xl" />
+                  <FiRefreshCw className="text-purple-600 text-xl" />
                 </button>
               </div>
             </div>
           </div>
 
           {/* Controls */}
-          <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 mb-6 animate-fadeIn">
+          <div className="bg-white rounded-2xl p-6 border border-gray-200 mb-6 animate-fadeIn shadow-sm">
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
               {/* Search */}
               <div className="relative flex-1 w-full">
@@ -179,7 +171,7 @@ export default function MessagesPage() {
                   placeholder="ابحث في الرسائل..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-gray-700 border-2 border-gray-600 text-white p-4 rounded-xl pl-12 focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-400 transition-all duration-300"
+                  className="w-full bg-gray-50 border-2 border-gray-200 text-gray-800 p-4 rounded-xl pl-12 focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 transition-all duration-300"
                 />
               </div>
 
@@ -188,7 +180,7 @@ export default function MessagesPage() {
                 <select
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
-                  className="bg-gray-700 border-2 border-gray-600 text-white p-4 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                  className="bg-gray-50 border-2 border-gray-200 text-gray-800 p-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
                 >
                   <option value="newest">الأحدث أولاً</option>
                   <option value="oldest">الأقدم أولاً</option>
@@ -202,21 +194,21 @@ export default function MessagesPage() {
             {isLoading ? (
               // Loading Skeleton
               Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="bg-gray-800 rounded-2xl p-6 border border-gray-700 animate-pulse">
+                <div key={index} className="bg-white rounded-2xl p-6 border border-gray-200 animate-pulse shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="space-y-3 flex-1">
-                      <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                      <div className="h-3 bg-gray-700 rounded w-1/2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                     </div>
-                    <div className="h-8 bg-gray-700 rounded w-20"></div>
+                    <div className="h-8 bg-gray-200 rounded w-20"></div>
                   </div>
                 </div>
               ))
             ) : filteredAndSortedMessages.length === 0 ? (
               // Empty State
-              <div className="text-center py-16 bg-gray-800 rounded-2xl border border-gray-700">
-                <FiMessageSquare className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-gray-400 mb-2">لا توجد رسائل</h3>
+              <div className="text-center py-16 bg-white rounded-2xl border border-gray-200 shadow-sm">
+                <FiMessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-gray-600 mb-2">لا توجد رسائل</h3>
                 <p className="text-gray-500">لم يتم إرسال أي رسائل بعد</p>
               </div>
             ) : (
@@ -224,22 +216,22 @@ export default function MessagesPage() {
               filteredAndSortedMessages.map((message: Message, index: number) => (
                 <div
                   key={message.id}
-                  className="bg-gray-800 rounded-2xl border border-gray-700 hover:border-purple-500/30 transition-all duration-300 overflow-hidden animate-slideUp"
+                  className="bg-white rounded-2xl border border-gray-200 hover:border-blue-300 transition-all duration-300 overflow-hidden animate-slideUp shadow-sm hover:shadow-md"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <div 
                     className="p-6 cursor-pointer"
-                   onClick={() => {
-    setExpandedMessage(expandedMessage === message.id ? null : message.id);
-    redmassafe(message.id);
-  }}
->
+                    onClick={() => {
+                      setExpandedMessage(expandedMessage === message.id ? null : message.id);
+                      redmassafe(message.id);
+                    }}
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <p className="text-white text-lg font-medium mb-2 line-clamp-2">
+                        <p className="text-gray-800 text-lg font-medium mb-2 line-clamp-2">
                           {message.message}
                         </p>
-                        <div className="flex items-center gap-4 text-sm text-gray-400">
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
                           <div className="flex items-center gap-1">
                             <FiCalendar className="w-4 h-4" />
                             <span>{formatDate(message.created_at)}</span>
@@ -248,18 +240,16 @@ export default function MessagesPage() {
                             <FiClock className="w-4 h-4" />
                             <span>{formatTime(message.created_at)}</span>
                           </div>
-                          <span className="bg-purple-500/20 text-purple-400 px-2 py-1 rounded-lg text-xs">
+                          <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-xs font-medium">
                             ID: {message.id}
                           </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        
-                        
                         {expandedMessage === message.id ? (
-                          <FiChevronUp className="w-5 h-5 text-purple-400" />
+                          <FiChevronUp className="w-5 h-5 text-blue-600" />
                         ) : (
-                          <FiChevronDown className="w-5 h-5 text-gray-400" />
+                          <FiChevronDown className="w-5 h-5 text-gray-500" />
                         )}
                       </div>
                     </div>
@@ -267,26 +257,25 @@ export default function MessagesPage() {
                   
                   {/* Expanded Content */}
                   {expandedMessage === message.id && (
-                    <div className="px-6 pb-6 border-t border-gray-700 pt-4 animate-slideDown">
-                      <div className="bg-gray-750 rounded-xl p-4">
-                        <h4 className="text-purple-400 font-medium mb-3">محتوى الرسالة:</h4>
-                        <p className="text-white text-lg leading-relaxed">{message.message}</p>
+                    <div className="px-6 pb-6 border-t border-gray-100 pt-4 animate-slideDown">
+                      <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <h4 className="text-blue-600 font-medium mb-3">محتوى الرسالة:</h4>
+                        <p className="text-gray-800 text-lg leading-relaxed">{message.message}</p>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div className="bg-gray-750 rounded-xl p-4">
-                          <h4 className="text-blue-400 font-medium mb-2">معلومات الإرسال:</h4>
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                          <h4 className="text-green-600 font-medium mb-2">معلومات الإرسال:</h4>
                           <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                              <span className="text-gray-400">تاريخ الإنشاء:</span>
-                              <span className="text-white">{formatDate(message.created_at)}</span>
+                              <span className="text-gray-600">تاريخ الإنشاء:</span>
+                              <span className="text-gray-800 font-medium">{formatDate(message.created_at)}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-400">آخر تحديث:</span>
-                              <span className="text-white">{formatDate(message.updated_at)}</span>
+                              <span className="text-gray-600">آخر تحديث:</span>
+                              <span className="text-gray-800 font-medium">{formatDate(message.updated_at)}</span>
                             </div>
                           </div>
                         </div>
-                       
                       </div>
                     </div>
                   )}

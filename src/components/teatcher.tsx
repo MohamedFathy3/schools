@@ -86,7 +86,7 @@ export default function Sidebar({
             </div>
           ) : (
             <h1 className="text-xl font-bold text-gray-800 transition-all duration-300">
-              ERP System
+             professional
             </h1>
           )}
         </div>

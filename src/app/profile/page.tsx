@@ -240,18 +240,7 @@ export default function TeacherProfilePage() {
     { id: 'documents', name: 'المستندات', icon: FiImage }
   ]
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
-          <div className="flex flex-col items-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mb-4"></div>
-            <div className="text-gray-600 text-lg">جار تحميل البيانات...</div>
-          </div>
-        </div>
-      </Layout>
-    )
-  }
+
 
   return (
     <Layout>

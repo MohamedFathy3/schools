@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   Home,
   Database,
-  ComputerIcon,
+  MessageSquare,
   User as UserIcon,
   Globe,
   Users,
@@ -43,6 +43,7 @@ export default function Sidebar({
     { name: 'chat', icon: MessageCircle, href: '/dashboard/sendchat' },
     { name: 'library', icon: Library, href: '/dashboard/library' },
     { name: 'coupon', icon: Ticket, href: '/dashboard/coupon' },
+    { name: 'conect Us', icon: MessageSquare, href: '/dashboard/conect' },
   ]
 
   return (
@@ -69,7 +70,7 @@ export default function Sidebar({
             </div>
           ) : (
             <h1 className="text-xl font-bold text-blue-700">
-              ERP System
+              professional
             </h1>
           )}
         </div>

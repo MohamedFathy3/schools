@@ -1,5 +1,5 @@
 'use client';
-
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -8,28 +8,68 @@ import {
   AreaChart, Area
 } from 'recharts';
 
-// بيانات نموذجية للرسوم البيانية
-const courseData = [
-  { name: 'يناير', طلاب: 0, إيرادات: 0 },
-  { name: 'فبراير', طلاب: 0, إيرادات:  0},
-  { name: 'مارس', طلاب: 0, إيرادات: 0 },
-  { name: 'أبريل', طلاب: 0, إيرادات: 0 },
-  { name: 'مايو', طلاب: 0, إيرادات: 0 },
-  { name: 'يونيو', طلاب: 0, إيرادات: 0 },
-];
-
-const categoryData = [
-  { name: 'مصر', value: 0 },
-  { name: 'السعودية', value: 0 },
-  { name: 'تركيا', value: 0 },
-  { name: 'سوريا', value: 0 },
-  { name: 'لبنان', value: 0 },
-];
-
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
-// Custom Tooltip Component for Pie Chart
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Types
+interface DashboardStats {
+  total_students: number;
+  total_courses: number;
+  total_instructors: number;
+  total_revenue: number;
+  students_change: string;
+  courses_change: string;
+  instructors_change: string;
+  revenue_change: string;
+}
+
+interface MonthlyData {
+  name: string;
+  طلاب: number;
+  إيرادات: number;
+  كورسات: number;
+}
+
+interface CountryData {
+  name: string;
+  value: number;
+  visitors: number;
+}
+
+interface RecentCourse {
+  id: number;
+  name: string;
+  teacher: string;
+  students: number;
+  rating: number;
+  final_price: number;
+  revenue: number;
+  created_at: string;
+}
+
+interface DashboardData {
+  dashboard_stats: DashboardStats;
+  monthly_data: MonthlyData[];
+  visitors_by_country: CountryData[];
+  recent_courses: RecentCourse[];
+}
+
+// Custom Tooltip Components
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-200">
+        <p className="font-semibold text-gray-800 mb-2">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} className="text-sm" style={{ color: entry.color }}>
+            {entry.name}: {typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 const CustomPieTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -37,14 +77,13 @@ const CustomPieTooltip = ({ active, payload }: any) => {
       <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-200">
         <p className="font-semibold text-gray-800">{data.name}</p>
         <p className="text-blue-600 font-bold">{data.value}%</p>
+        <p className="text-gray-600 text-sm">{data.visitors} visitors</p>
       </div>
     );
   }
   return null;
 };
 
-// Custom Label for Pie Chart
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
   const RADIAN = Math.PI / 180;
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
@@ -66,69 +105,174 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 };
 
 export default function DashboardPage() {
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch dashboard data from API
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch(`/api/admin/dashboard-stats`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch dashboard data');
+        }
+        
+        const result = await response.json();
+        
+        if (result && result.dashboard_stats) {
+          setDashboardData(result);
+        } else {
+          throw new Error('Invalid data format');
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 text-lg">Loading dashboard data...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-red-600 text-lg mb-4">❌ {error}</div>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!dashboardData) {
+    return (
+      <Layout>
+        <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600 text-lg">No data available</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  const { dashboard_stats, monthly_data, visitors_by_country, recent_courses } = dashboardData;
+
+  // Prepare chart data with proper field names
+  const barChartData = monthly_data.map(item => ({
+    name: item.name,
+    students: item.طلاب,
+    revenue: item.إيرادات,
+    courses: item.كورسات
+  }));
+
+  const lineChartData = monthly_data.map(item => ({
+    name: item.name,
+    students: item.طلاب,
+    courses: item.كورسات
+  }));
+
+  const areaChartData = monthly_data.map(item => ({
+    name: item.name,
+    revenue: item.إيرادات
+  }));
+
+  // Fix for PieChart data type issue
+  const pieChartData = visitors_by_country.map(item => ({
+    ...item,
+    // Ensure the data has the required structure for PieChart
+    value: item.value,
+    name: item.name
+  }));
+
   return (
     <Layout>
       <div className="p-6 bg-gray-50 min-h-screen">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">لوحة التحكم</h1>
-            <p className="text-gray-600 mt-1">نظرة عامة على إحصائيات المنصة</p>
+            <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+            <p className="text-gray-600 mt-1">Overview of platform statistics</p>
           </div>
           <div className="text-sm text-gray-500 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-200">
-            آخر تحديث: اليوم {new Date().toLocaleDateString('ar-EG')}
+            Last update: {new Date().toLocaleDateString('en-US')}
           </div>
         </div>
         
-        {/* بطاقات الإحصائيات */}
+        {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {[
             { 
-              title: 'إجمالي الطلاب', 
-              value: '0,0', 
+              title: 'Total Students', 
+              value: dashboard_stats.total_students.toLocaleString(), 
               icon: '👨‍🎓', 
-              color: 'blue', 
-              change: '+12%',
+              change: dashboard_stats.students_change,
               bgColor: 'bg-blue-50',
-              borderColor: 'border-blue-200',
-              textColor: 'text-blue-600'
+              borderColor: 'border-blue-200'
             },
             { 
-              title: 'إجمالي الكورسات', 
-              value: '0', 
+              title: 'Total Courses', 
+              value: dashboard_stats.total_courses.toLocaleString(), 
               icon: '📚', 
-              color: 'green', 
-              change: '+5%',
+              change: dashboard_stats.courses_change,
               bgColor: 'bg-green-50',
-              borderColor: 'border-green-200',
-              textColor: 'text-green-600'
+              borderColor: 'border-green-200'
             },
             { 
-              title: 'ساعات التعلم', 
-              value: '0,0', 
-              icon: '⏰', 
-              color: 'yellow', 
-              change: '+8%',
+              title: 'Total Instructors', 
+              value: dashboard_stats.total_instructors.toLocaleString(), 
+              icon: '👨‍🏫', 
+              change: dashboard_stats.instructors_change,
               bgColor: 'bg-yellow-50',
-              borderColor: 'border-yellow-200',
-              textColor: 'text-yellow-600'
+              borderColor: 'border-yellow-200'
             },
             { 
-              title: 'الإيرادات', 
-              value: '$0,0', 
+              title: 'Total Revenue', 
+              value: `$${dashboard_stats.total_revenue.toFixed(2)}`, 
               icon: '💰', 
-              color: 'purple', 
-              change: '+15%',
+              change: dashboard_stats.revenue_change,
               bgColor: 'bg-purple-50',
-              borderColor: 'border-purple-200',
-              textColor: 'text-purple-600'
+              borderColor: 'border-purple-200'
             }
           ].map((stat, index) => (
-            <div key={index} className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div key={index} className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-600 text-sm font-medium mb-1">{stat.title}</p>
                   <p className="text-3xl font-bold text-gray-800 mb-2">{stat.value}</p>
-                  <span className={`text-sm font-medium ${stat.change.startsWith('+') ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'} px-2 py-1 rounded-full border ${stat.change.startsWith('+') ? 'border-green-200' : 'border-red-200'}`}>
+                  <span className={`text-sm font-medium ${
+                    stat.change.startsWith('+') 
+                      ? 'text-green-600 bg-green-50 border border-green-200' 
+                      : stat.change.startsWith('-')
+                      ? 'text-red-600 bg-red-50 border border-red-200'
+                      : 'text-gray-600 bg-gray-50 border border-gray-200'
+                  } px-2 py-1 rounded-full`}>
                     {stat.change}
                   </span>
                 </div>
@@ -140,20 +284,21 @@ export default function DashboardPage() {
           ))}
         </div>
         
-        {/* قسم الرسوم البيانية */}
+        {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* رسم بياني عمودي */}
+          {/* Bar Chart - Students & Revenue */}
           <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-800">تطور عدد الطلاب والإيرادات</h2>
-              <div className="flex space-x-2 space-x-reverse">
-                <button className="px-3 py-1 text-sm bg-blue-100 text-blue-600 rounded-lg font-medium border border-blue-200">شهري</button>
-                <button className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-lg font-medium border border-gray-200">سنوي</button>
+              <h2 className="text-xl font-bold text-gray-800">Students & Revenue Growth</h2>
+              <div className="flex space-x-2">
+                <button className="px-3 py-1 text-sm bg-blue-100 text-blue-600 rounded-lg font-medium border border-blue-200">
+                  Monthly
+                </button>
               </div>
             </div>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={courseData}>
+                <BarChart data={barChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                   <XAxis 
                     dataKey="name" 
@@ -164,46 +309,38 @@ export default function DashboardPage() {
                     stroke="#6B7280"
                     fontSize={12}
                   />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'white', 
-                      border: '1px solid #E5E7EB', 
-                      borderRadius: '12px',
-                      boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                      fontSize: '14px'
-                    }}
-                  />
+                  <Tooltip content={<CustomTooltip />} />
                   <Legend />
                   <Bar 
-                    dataKey="طلاب" 
+                    dataKey="students" 
                     fill="#3B82F6" 
                     radius={[4, 4, 0, 0]}
-                    name="عدد الطلاب"
+                    name="Students"
                   />
                   <Bar 
-                    dataKey="إيرادات" 
+                    dataKey="revenue" 
                     fill="#10B981" 
                     radius={[4, 4, 0, 0]}
-                    name="الإيرادات"
+                    name="Revenue"
                   />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
           
-          {/* رسم بياني دائري */}
+          {/* Pie Chart - Visitors by Country */}
           <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-800">توزيع الطلاب حسب الجنسية</h2>
+              <h2 className="text-xl font-bold text-gray-800">Visitors by Country</h2>
               <div className="text-sm text-gray-500">
-                النسبة المئوية
+                Percentage Distribution
               </div>
             </div>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={categoryData}
+                    data={pieChartData}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -213,7 +350,7 @@ export default function DashboardPage() {
                     label={renderCustomizedLabel}
                     labelLine={false}
                   >
-                    {categoryData.map((entry, index) => (
+                    {pieChartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -222,9 +359,6 @@ export default function DashboardPage() {
                     layout="vertical"
                     verticalAlign="middle"
                     align="right"
-                    wrapperStyle={{
-                      paddingLeft: '20px'
-                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -232,14 +366,14 @@ export default function DashboardPage() {
           </div>
         </div>
         
-        {/* قسم إضافي مع رسوم بيانية أخرى */}
+        {/* Additional Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* رسم بياني خطي */}
+          {/* Line Chart - Students & Courses */}
           <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800 mb-6">معدل إكمال الكورسات</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-6">Students & Courses Progress</h2>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={courseData}>
+                <LineChart data={lineChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                   <XAxis 
                     dataKey="name" 
@@ -250,35 +384,37 @@ export default function DashboardPage() {
                     stroke="#6B7280"
                     fontSize={12}
                   />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'white', 
-                      border: '1px solid #E5E7EB', 
-                      borderRadius: '12px',
-                      boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                      fontSize: '14px'
-                    }}
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="students" 
+                    stroke="#3B82F6" 
+                    strokeWidth={3}
+                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, fill: '#3B82F6' }}
+                    name="Students"
                   />
                   <Line 
                     type="monotone" 
-                    dataKey="طلاب" 
-                    stroke="#3B82F6" 
+                    dataKey="courses" 
+                    stroke="#F59E0B" 
                     strokeWidth={3}
-                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 6 }}
-                    activeDot={{ r: 8, fill: '#3B82F6' }}
-                    name="نسبة الإكمال"
+                    dot={{ fill: '#F59E0B', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, fill: '#F59E0B' }}
+                    name="Courses"
                   />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
           
-          {/* رسم بياني مساحي */}
+          {/* Area Chart - Revenue Growth */}
           <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800 mb-6">نمو الإيرادات</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-6">Revenue Growth</h2>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={courseData}>
+                <AreaChart data={areaChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                   <XAxis 
                     dataKey="name" 
@@ -289,22 +425,14 @@ export default function DashboardPage() {
                     stroke="#6B7280"
                     fontSize={12}
                   />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'white', 
-                      border: '1px solid #E5E7EB', 
-                      borderRadius: '12px',
-                      boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                      fontSize: '14px'
-                    }}
-                  />
+                  <Tooltip content={<CustomTooltip />} />
                   <Area 
                     type="monotone" 
-                    dataKey="إيرادات" 
+                    dataKey="revenue" 
                     stroke="#10B981" 
                     fill="url(#colorRevenue)" 
                     strokeWidth={3}
-                    name="الإيرادات"
+                    name="Revenue"
                   />
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -318,59 +446,49 @@ export default function DashboardPage() {
           </div>
         </div>
         
-        {/* قسم الكورسات الحديثة */}
+        {/* Recent Courses Section */}
         <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-800">أحدث الكورسات</h2>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium shadow-md hover:shadow-lg">
-              عرض الكل
-            </button>
+            <h2 className="text-xl font-bold text-gray-800">Recent Courses</h2>
+            <div className="text-sm text-gray-500">
+              Total: {recent_courses.length} courses
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-right pb-4 px-6 text-sm font-semibold text-gray-600">اسم الكورس</th>
-                  <th className="text-right pb-4 px-6 text-sm font-semibold text-gray-600">المعلم</th>
-                  <th className="text-right pb-4 px-6 text-sm font-semibold text-gray-600">عدد الطلاب</th>
-                  <th className="text-right pb-4 px-6 text-sm font-semibold text-gray-600">التقييم</th>
-                  <th className="text-right pb-4 px-6 text-sm font-semibold text-gray-600">الحالة</th>
+                  <th className="text-left pb-4 px-6 text-sm font-semibold text-gray-600">Course Name</th>
+                  <th className="text-left pb-4 px-6 text-sm font-semibold text-gray-600">Teacher</th>
+                  <th className="text-left pb-4 px-6 text-sm font-semibold text-gray-600">Students</th>
+                  <th className="text-left pb-4 px-6 text-sm font-semibold text-gray-600">Price</th>
+                  <th className="text-left pb-4 px-6 text-sm font-semibold text-gray-600">Revenue</th>
+                  <th className="text-left pb-4 px-6 text-sm font-semibold text-gray-600">Created</th>
                 </tr>
               </thead>
               <tbody>
-                {[
-                  { name: 'تطوير تطبيقات الويب باستخدام React', teacher: 'أحمد محمد', students: 245, rating: 4.8, status: 'نشط' },
-                  { name: 'تعلم Machine Learning من الصفر', teacher: 'سارة عبدالله', students: 187, rating: 4.9, status: 'نشط' },
-                  { name: 'التصميم الجرافيكي للمبتدئين', teacher: 'خالد حسن', students: 312, rating: 4.7, status: 'مكتمل' },
-                  { name: 'تعلم اللغة الإنجليزية للمحترفين', teacher: 'ليلى أحمد', students: 156, rating: 4.6, status: 'نشط' },
-                  { name: 'برمجة تطبيقات الموبايل', teacher: 'محمد علي', students: 278, rating: 4.8, status: 'مكتمل' }
-                ].map((course, index) => (
-                  <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="py-4 px-6 text-right">
+                {recent_courses.map((course) => (
+                  <tr key={course.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="py-4 px-6">
                       <div className="font-medium text-gray-800">{course.name}</div>
                     </td>
-                    <td className="py-4 px-6 text-right text-gray-600">{course.teacher}</td>
-                    <td className="py-4 px-6 text-right">
-                      <span className="font-medium text-gray-800">{course.students.toLocaleString()}</span>
-                      <span className="text-gray-500 text-sm mr-1"> طالب</span>
+                    <td className="py-4 px-6 text-gray-600">{course.teacher}</td>
+                    <td className="py-4 px-6">
+                      <span className="font-medium text-gray-800">{course.students}</span>
+                      <span className="text-gray-500 text-sm ml-1">students</span>
                     </td>
-                    <td className="py-4 px-6 text-right">
-                      <div className="flex items-center justify-end">
-                        <div className="flex text-yellow-400 ml-1">
-                          {'★'.repeat(Math.floor(course.rating))}
-                          {'☆'.repeat(5 - Math.floor(course.rating))}
-                        </div>
-                        <span className="font-medium text-gray-800 mr-1">({course.rating})</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        course.status === 'نشط' 
-                          ? 'bg-green-100 text-green-800 border border-green-200' 
-                          : 'bg-blue-100 text-blue-800 border border-blue-200'
-                      }`}>
-                        {course.status}
+                    <td className="py-4 px-6">
+                      <span className="font-medium text-green-600">
+                        ${course.final_price.toFixed(2)}
                       </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="font-medium text-blue-600">
+                        ${course.revenue.toFixed(2)}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-gray-500 text-sm">
+                      {new Date(course.created_at).toLocaleDateString('en-US')}
                     </td>
                   </tr>
                 ))}

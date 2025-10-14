@@ -33,7 +33,7 @@ export default function AdminWithdrawRequestsPage() {
   const fetchRequests = async () => {
     const token = getToken()
     if (!token) {
-      window.location.href = '/admin/login'
+      window.location.href = '/dashboard/auth'
       return
     }
     try {
@@ -83,7 +83,7 @@ export default function AdminWithdrawRequestsPage() {
   const handleStatusChange = async (req: WithdrawRequest, newStatus: 'accepted' | 'rejected') => {
     const token = getToken()
     if (!token) {
-      window.location.href = '/admin/login'
+      window.location.href = '/dashboard/auth'
       return
     }
     try {
