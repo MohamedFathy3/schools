@@ -54,11 +54,15 @@ interface DashboardData {
 }
 
 // Custom Tooltip Components
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-200">
-        <p className="font-semibold text-gray-800 mb-2">{label}</p>
+       <p className="font-semibold text-gray-800 mb-2">{label}</p>
+       {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+} 
         {payload.map((entry: any, index: number) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
             {entry.name}: {typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}
@@ -69,7 +73,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   }
   return null;
 };
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomPieTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -83,7 +87,7 @@ const CustomPieTooltip = ({ active, payload }: any) => {
   }
   return null;
 };
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
   const RADIAN = Math.PI / 180;
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;

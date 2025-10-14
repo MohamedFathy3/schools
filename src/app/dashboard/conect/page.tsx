@@ -196,7 +196,8 @@ export default function ContactUsManagementPage() {
         return true
       } else {
         if (data.errors) {
-          Object.values(data.errors).forEach((arr: any) => 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            Object.values(data.errors).forEach((arr: any) => 
             arr.forEach((e: string) => toast.error(e))
           )
         } else {
