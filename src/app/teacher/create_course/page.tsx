@@ -403,36 +403,25 @@ export default function AddCoursePage() {
             </div>
 
             {/* ما سيتعلمه الطالب */}
-            <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-800 border-r-4 border-indigo-500 pr-3">محتوى الكورس</h2>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">ما سيتعلمه الطالب</label>
-                <textarea
-                  name="what_you_will_learn"
-                  value={formData.what_you_will_learn}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full p-4 rounded-xl bg-gray-50 text-gray-800 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  placeholder="اذكر المهارات والمعارف التي سيكتسبها الطالب"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">رابط الفيديو التعريفي</label>
-                <div className="relative">
-                  <FiLink className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="url"
-                    name="intro_video_url"
-                    value={formData.intro_video_url}
-                    onChange={handleInputChange}
-                    className="w-full pr-12 pl-4 py-4 rounded-xl bg-gray-50 text-gray-800 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="https://youtube.com/example"
-                  />
-                </div>
-              </div>
-            </div>
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-3">
+    ما سيتعلمه الطالب *
+    <span className="text-xs text-gray-500 mr-2">(افصل كل نقطة بسطر جديد)</span>
+  </label>
+  <textarea
+    name="what_you_will_learn"
+    value={formData.what_you_will_learn}
+    onChange={handleInputChange}
+    rows={5}
+    className="w-full p-4 rounded-xl bg-gray-50 text-gray-800 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+    placeholder={`HTML Basics
+CSS Styling
+JavaScript Fundamentals
+Responsive Design
+...`}
+  />
+  <p className="text-xs text-gray-500 mt-2">اكتب كل نقطة في سطر منفصل</p>
+</div>
 
             {/* صورة الكورس */}
             <div className="space-y-6">
