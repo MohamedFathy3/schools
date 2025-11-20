@@ -150,10 +150,7 @@ export default function Navbar({ toggleSidebar }: { toggleSidebar: () => void })
                 </div>
                 
                 <ul className="py-2">
-                  <li className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-3 text-gray-700">
-                    <Settings className="h-4 w-4" />
-                    <span className="text-sm">الإعدادات</span>
-                  </li>
+                 
                   <li
                     className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-3 text-red-600 border-t border-gray-100"
                     onClick={handleLogout}

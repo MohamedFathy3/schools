@@ -493,7 +493,7 @@ export default function TeacherProfilePage() {
                       value={formData.email}
                       onChange={handleInputChange}
                       className="w-full bg-gray-50 border-2 border-gray-300 rounded-2xl p-4 text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300"
-                      required
+                      disabled
                     />
                   </div>
 
