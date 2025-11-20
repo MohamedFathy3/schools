@@ -26,6 +26,8 @@ interface TeacherData {
   account_number?: string
   iban?: string
   wallets_number?: string
+  all_net_income:string,
+  all_total_income:string;
 }
 
 interface TeacherBalance {
@@ -35,6 +37,9 @@ interface TeacherBalance {
   rewards_amount: number
   courses_count: number
   students_count: number
+  all_total_income:number;
+  all_net_income:number;
+  
 }
 
 interface WithdrawItem {
@@ -73,18 +78,22 @@ export default function WithdrawPage() {
     const totalIncome = teacher.total_income || 0
     const commissionRate = parseFloat(teacher.commission) / 100
     const commissionAmount = totalIncome * commissionRate
-    const netIncome = totalIncome - commissionAmount
+
     
     // تحويل الجوائز من نص إلى رقم
-    const rewardsAmount = parseFloat(teacher.rewards || '0') || 0
+    const rewardsAmount = parseFloat(teacher.rewards || '0') || 0;
+    const net_incomes =  parseFloat(teacher.all_net_income || '0') || 0
+      const all_total_income = parseFloat(teacher.all_total_income || '0') || 0
 
     return {
       total_income: totalIncome,
-      net_income: netIncome,
+      net_income: net_incomes,
       commission_amount: commissionAmount,
       rewards_amount: rewardsAmount,
       courses_count: teacher.courses_count || 0,
-      students_count: teacher.students_count || 0
+      students_count: teacher.students_count || 0,
+            all_total_income: all_total_income,
+      all_net_income: net_incomes 
     }
   }
 
@@ -94,7 +103,9 @@ export default function WithdrawPage() {
     commission_amount: 0,
     rewards_amount: 0,
     courses_count: 0,
-    students_count: 0
+    students_count: 0,
+    all_total_income:0,
+    
   }
 
   // الحصول على الرصيد المتاح بناءً على مصدر السحب المختار
@@ -519,7 +530,7 @@ export default function WithdrawPage() {
                 <div>
                   <p className="text-gray-600 text-sm">العمولة</p>
                   <p className="text-xl md:text-2xl font-bold mt-1 md:mt-2 text-orange-600">
-                    {formatCurrency(balance.commission_amount)}
+                    {formatCurrency(balance.all_total_income)}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">نسبة {teacherData.commission}</p>
                 </div>
@@ -551,19 +562,7 @@ export default function WithdrawPage() {
                       <span className="text-xs font-medium">من الأرباح</span>
                       <span className="text-xs mt-1">{formatCurrency(balance.net_income)}</span>
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleWithdrawFromChange('rewards')}
-                      className={`p-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center justify-center ${
-                        formData.withdraw_from === 'rewards' 
-                          ? 'border-purple-500 bg-purple-50 text-purple-700' 
-                          : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                      }`}
-                    >
-                      <FiGift className="text-lg mb-1" />
-                      <span className="text-xs font-medium">من الجوائز</span>
-                      <span className="text-xs mt-1">{formatCurrency(balance.rewards_amount)}</span>
-                    </button>
+                 
                   </div>
                 </div>
 
